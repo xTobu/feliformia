@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "nuxt.config.js",
+      "use": "@nuxtjs/vercel-builder",
+      "config": {
+        "serverFiles": ["package.json", "server-middleware/api/**"]
+      }
+    },
+    {
+      "src": "server-middleware/api/*.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/sw.js",
+      "continue": true,
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Service-Worker-Allowed": "/"
+      }
+    },
+    {
+      "src": "/api",
+      "dest": "/server-middleware/api/index.js"
+    }
+  ]
+}
