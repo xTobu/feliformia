@@ -79,26 +79,16 @@
                   >
                 </div>
                 <div class="W60 d_flex">
-                  <el-radio-group v-model="cat.feces_warning">
-                    <el-radio :label="'正常'" :disabled="!cat.feces"
-                      >正常</el-radio
-                    >
-                    <el-radio :label="'軟'" :disabled="!cat.feces"
-                      >軟便</el-radio
-                    >
-                    <el-radio :label="'拉稀'" :disabled="!cat.feces"
-                      >拉稀</el-radio
-                    >
+                  <el-radio-group
+                    v-model="cat.feces_warning"
+                    :disabled="!cat.feces"
+                  >
+                    <el-radio label="正常">正常</el-radio>
+                    <el-radio label="軟便">軟便</el-radio>
+                    <el-radio label="拉稀">拉稀</el-radio>
                   </el-radio-group>
                 </div>
               </div>
-
-              <!-- <div class="W50 d_flex j_start mb0">
-                <p class="f_blue">尿</p>
-                <div>
-                  <input type="checkbox" v-model="cat.urine" id="" />
-                </div>
-              </div> -->
             </div>
           </div>
         </div>
@@ -194,76 +184,78 @@ export default {
       formData: {
         date: "",
         time: "",
-        catLists: {
-          0: {
+        catLists: [
+          {
             name: "大哥",
             feed: true,
             feed_detail: 0,
             can: false,
             can_detail: 0,
-            feces: null,
+            feces: false,
             feces_warning: null,
             urine: false,
           },
-          1: {
+          {
             name: "噗噗",
             feed: true,
             feed_detail: 0,
             can: false,
             can_detail: 0,
-            feces: null,
+            feces: false,
             feces_warning: null,
             urine: false,
           },
-          2: {
+          {
             name: "亮亮",
             feed: true,
             feed_detail: 0,
             can: false,
             can_detail: 0,
-            feces: null,
+            feces: false,
             feces_warning: null,
             urine: false,
           },
-          3: {
+          {
             name: "冬瓜",
             feed: true,
             feed_detail: 0,
             can: false,
             can_detail: 0,
-            feces: null,
+            feces: false,
             feces_warning: null,
             urine: false,
           },
-          4: {
+          {
             name: "蛋蛋",
             feed: true,
             feed_detail: 0,
             can: false,
             can_detail: 0,
-            feces: null,
+            feces: false,
             feces_warning: null,
             urine: false,
           },
-          5: {
+          {
             name: "烏魯木",
             feed: true,
             feed_detail: 0,
             can: false,
             can_detail: 0,
-            feces: null,
+            feces: false,
+            feces_warning: null,
             urine: false,
           },
-          6: {
+          {
             name: "大樹",
             feed: true,
             feed_detail: 0,
             can: false,
             can_detail: 0,
-            feces: null,
+            feces: false,
+            feces_warning: null,
             urine: false,
           },
-        },
+        ],
         desc: "",
         member: "",
       },
