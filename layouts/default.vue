@@ -1,6 +1,6 @@
 <template>
   <div>
-    <nuxt />
+    <nuxt :key="$route.fullPath" />
     <Footer />
   </div>
 </template>

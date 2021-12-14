@@ -12,7 +12,7 @@ export default {
     // baseUrl: process.env.BASE_URL || "",
   },
   head: {
-    title: "Feliformia",
+    titleTemplate: "%s | Feliformia",
     meta: [
       { charset: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -54,7 +54,10 @@ export default {
    */
   plugins: [
     "~/plugins/element-ui/element-ui",
-
+    {
+      src: "~/plugins/axios",
+      ssr: true,
+    },
     // { src: '~/static/js/media.js',
     //   mode: 'client',
     //   defer: true
@@ -68,11 +71,33 @@ export default {
   /*
    ** Nuxt.js modules
    */
-  modules: [],
+  modules: ["@nuxtjs/axios", "@nuxtjs/dayjs"],
+
+  /**
+   * @nuxtjs/axios 設定預設
+   */
+  axios: {
+    prefix: "/api",
+  },
+
+  /**
+   * @nuxtjs/dayjs 設定預設
+   */
+  dayjs: {
+    locales: ["zh-tw", "en"],
+    defaultLocale: "en",
+    defaultTimeZone: "Asia/Taipei",
+    plugins: [
+      "utc", // import 'dayjs/plugin/utc'
+      "timezone", // import 'dayjs/plugin/timezone'
+    ], // Your Day.js plugin
+  },
+
   /*
    ** Build configuration
    */
   build: {
+    vendor: ["axios", "qs"],
     /*
      ** You can extend webpack config here
      */

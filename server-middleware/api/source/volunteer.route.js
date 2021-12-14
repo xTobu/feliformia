@@ -1,23 +1,14 @@
 import express from "express";
 import { List, Get } from "./volunteer.repo";
-
+import { MakeSuccess, MakeFail } from "../helper/response";
 // Controller
 const GetVolunteers = async (req, res, next) => {
   try {
     const volunteers = await List();
-    res.status(200).json({
-      status: "success",
-      code: 0,
-      msg: "",
-      data: volunteers,
-    });
+    MakeSuccess(res, volunteers);
   } catch (error) {
-    res.status(400).json({
-      status: "fail",
-      code: 1,
-      msg: error.message,
-      data: null,
-    });
+    const { message } = error;
+    MakeFail(res, 400, 1, message);
   }
 };
 
@@ -25,19 +16,10 @@ const FindVolunteer = async (req, res, next) => {
   const { recordId } = req.params;
   try {
     const volunteer = await Get(recordId);
-    res.status(200).json({
-      status: "success",
-      code: 0,
-      msg: "",
-      data: volunteer,
-    });
+    MakeSuccess(res, volunteer);
   } catch (error) {
-    res.status(400).json({
-      status: "fail",
-      code: 1,
-      msg: error.message,
-      data: null,
-    });
+    const { message } = error;
+    MakeFail(res, 400, 1, message);
   }
 };
 

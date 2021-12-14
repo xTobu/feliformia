@@ -1,20 +1,27 @@
 <template>
   <div class="wrapper" id="regular">
     <h1>飲食及如廁紀錄表</h1>
-    <form v-on:submit.prevent="sendMessage">
+    <form v-on:submit.prevent="submit">
       <div class="d_flex">
         <div class="W50">
           <el-date-picker
             v-model="formData.date"
+            :picker-options="pickerOptions"
             type="date"
+            :clearable="false"
+            @change="dateHandler"
             placeholder="請選擇日期"
           >
           </el-date-picker>
         </div>
         <div class="W50 arrow">
-          <el-select v-model="formData.time" placeholder="請選擇班別">
+          <el-select
+            v-model="formData.shift"
+            placeholder="請選擇班別"
+            @change="dateHandler"
+          >
             <el-option
-              v-for="item in timeLists"
+              v-for="item in shiftLists"
               :key="item.value"
               :label="item.label"
               :value="item.value"
@@ -27,7 +34,7 @@
         <div
           class="d_flex record_item"
           :key="cat.name"
-          v-for="(cat, index) in formData.catLists"
+          v-for="(cat, index) in formData.cats"
         >
           <div class="name">{{ cat.name }}</div>
           <div class="detail">
@@ -96,7 +103,7 @@
       <div class="W100 ps f_grey">
         *前班備註：
         <br />
-        {{ remark }}
+        {{ formData.remark }}
       </div>
       <div class="W100 mb20">
         <el-input
@@ -112,7 +119,7 @@
           class="mb20 W100"
         >
           <el-option
-            v-for="member in memberLists"
+            v-for="member in memberList"
             :key="member.value"
             :label="member.label"
             :value="member.value"
@@ -124,11 +131,8 @@
         <button type="submit" class="btn">
           {{ loading ? "loading" : "送出" }}
         </button>
-        <NuxtLink
-          class="f_red"
-          :to="{ name: 'regular', query: { date: formData.date } }"
-          >看前班紀錄</NuxtLink
-        >
+        <NuxtLink class="f_red" :to="prevLink">看前班紀錄</NuxtLink>
+        <NuxtLink class="f_red" to="/regular">回到今天</NuxtLink>
         <NuxtLink class="f_red" to="/medicine">前往餵藥及特殊飲食須知</NuxtLink>
       </div>
     </form>
@@ -138,16 +142,25 @@
 <script>
 export default {
   layout: "default",
+  head: {
+    title: "飲食及如廁紀錄表",
+  },
   data() {
     return {
       loading: false,
-      timeLists: [
+      pickerOptions: {
+        disabledDate(time) {
+          // 不可選未來的日期
+          return time.getTime() > Date.now();
+        },
+      },
+      shiftLists: [
         {
-          value: "早班",
+          value: "morning",
           label: "早班",
         },
         {
-          value: "晚班",
+          value: "night",
           label: "晚班",
         },
       ],
@@ -158,155 +171,169 @@ export default {
         75: "吃2/3",
         100: "吃光",
       },
-      memberLists: [
-        {
-          value: "小萬",
-          label: "小萬",
-        },
-        {
-          value: "Flo",
-          label: "Flo",
-        },
-        {
-          value: "阿俐",
-          label: "阿俐",
-        },
-        {
-          value: "小貝",
-          label: "小貝",
-        },
-        {
-          value: "俊翔",
-          label: "俊翔",
-        },
+      memberList: [
+        // {
+        //   value: "小萬",
+        //   label: "小萬",
+        // },
       ],
-      remark: "很多貓咪都拉稀，請再留意狀況！",
       formData: {
+        recordId: "",
         date: "",
-        time: "",
-        catLists: [
-          {
-            name: "大哥",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: false,
-            feces_warning: null,
-            urine: false,
-          },
-          {
-            name: "噗噗",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: false,
-            feces_warning: null,
-            urine: false,
-          },
-          {
-            name: "亮亮",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: false,
-            feces_warning: null,
-            urine: false,
-          },
-          {
-            name: "冬瓜",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: false,
-            feces_warning: null,
-            urine: false,
-          },
-          {
-            name: "蛋蛋",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: false,
-            feces_warning: null,
-            urine: false,
-          },
-          {
-            name: "烏魯木",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: false,
-            feces_warning: null,
-            urine: false,
-          },
-          {
-            name: "大樹",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: false,
-            feces_warning: null,
-            urine: false,
-          },
+        shift: "",
+        cats: [
+          // {
+          //   name: "大哥",
+          //   feed: true,
+          //   feed_detail: 0,
+          //   can: false,
+          //   can_detail: 0,
+          //   feces: false,
+          //   feces_warning: null,
+          //   urine: false,
+          // },
         ],
         desc: "",
         member: "",
+        remark: "",
       },
     };
   },
+  computed: {
+    prevDateShift() {
+      let date = this.formData.date
+        ? this.$dayjs(this.formData.date)
+        : this.$dayjs();
+      if (this.formData.shift == "morning") {
+        date = date.subtract(1, "day");
+      }
+      const shift = this.formData.shift == "morning" ? "night" : "morning";
+      return {
+        date: date.toDate(),
+        shift,
+      };
+    },
+    prevLink() {
+      return {
+        name: "regular",
+        query: {
+          date: this.$dayjs(this.prevDateShift.date).format("YYYY-MM-DD"),
+          shift: this.prevDateShift.shift,
+        },
+      };
+    },
+  },
+
   created() {},
-  beforeMount() {
-    const {
-      query: { date, time },
-    } = this.$route;
-    if (!date) {
-      this.formData.date = new Date();
-    }
-    if (!time) {
-      this.formData.time = new Date().getHours() > 15 ? "晚班" : "早班";
-    }
+
+  async beforeMount() {
+    await this.InitDateAndShift();
+    await this.InitMemberList();
+    await this.InitRegular();
   },
-  updated() {
-    // console.log(this.catLists);
-  },
-  mounted() {},
+
+  async mounted() {},
+
+  updated() {},
+
   methods: {
+    dateHandler() {
+      let { date, shift } = this.formData;
+      date = date || new Date(date);
+      this.$router.push({
+        name: "regular",
+        query: {
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          shift,
+        },
+      });
+    },
+
     fecesHandler(e, index) {
-      this.formData.catLists[index].feces_warning = e ? "正常" : null;
+      this.formData.cats[index].feces_warning = e ? "正常" : null;
     },
     foodHandler(type, index) {
       if (type === "can") {
-        this.formData.catLists[index].can_detail = 0;
+        this.formData.cats[index].can_detail = 0;
         return;
       }
-      this.formData.catLists[index].feed_detail = 0;
+      this.formData.cats[index].feed_detail = 0;
     },
-    sendMessage() {
+    async submit() {
       this.loading = true;
-      this.$axios
-        .post("/messages", {
-          name: this.name,
-          email: this.email,
-          phone: this.phone,
-          message: this.message,
-        })
-        .then((response) => {
-          this.success = true;
-          this.errored = false;
-        })
-        .catch((error) => {
-          this.errored = true;
-        })
-        .finally(() => {
-          this.loading = false;
+      await this.UpdateRegular();
+      this.loading = false;
+    },
+    async InitDateAndShift() {
+      const {
+        query: { date, shift },
+      } = this.$route;
+
+      this.formData.date = date ? new Date(date) : new Date();
+      this.formData.shift = shift
+        ? shift == "morning"
+          ? "morning"
+          : "night"
+        : new Date().getHours() < 15
+        ? "morning"
+        : "night";
+    },
+    async InitMemberList() {
+      const { data: volunteers } = await this.$axios.$get("/volunteer/list");
+      this.memberList = volunteers.map((volunteer) => {
+        return {
+          label: volunteer.name,
+          value: volunteer.name,
+        };
+      });
+    },
+
+    async InitRegular() {
+      try {
+        const { date, shift } = this.formData;
+        const { data: regular } = await this.$axios.$get("/regular", {
+          params: {
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            shift,
+          },
         });
+
+        const {
+          recordId,
+          cats,
+          date: strDate,
+          shift: strShift,
+          member,
+          note,
+          remark,
+        } = regular;
+
+        this.formData.recordId = recordId;
+        this.formData.date = new Date(strDate);
+        this.formData.shift = strShift;
+        this.formData.cats = cats;
+        this.formData.desc = note;
+        this.formData.remark = remark;
+        this.formData.member = member;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+
+    async UpdateRegular() {
+      try {
+        const { recordId, date, shift, cats, note, member } = this.formData;
+        await this.$axios.$post("/regular/update", {
+          recordId,
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          shift,
+          cats,
+          note,
+          member,
+        });
+      } catch (e) {
+        console.error(e);
+      }
     },
   },
 };

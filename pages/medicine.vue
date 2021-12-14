@@ -153,9 +153,7 @@ export default {
       this.formData.date = new Date();
     }
   },
-  updated() {
-    // console.log(this.catLists);
-  },
+  updated() {},
   mounted() {},
   methods: {
     sendMessage() {

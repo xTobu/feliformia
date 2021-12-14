@@ -9,6 +9,9 @@
 <script>
 export default {
   layout: "default",
+  head: {
+    title: "貓毛輪值線上表單",
+  },
   // page component definitions
 };
 </script>
