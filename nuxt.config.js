@@ -5,12 +5,6 @@ export default {
   /*
    ** Headers of the page
    */
-  // router: {
-  //   base: '/GVM_dist/'
-  // },
-  env: {
-    // baseUrl: process.env.BASE_URL || "",
-  },
   head: {
     titleTemplate: "%s | Feliformia",
     meta: [
@@ -77,7 +71,7 @@ export default {
    * @nuxtjs/axios 設定預設
    */
   axios: {
-    prefix: "/api",
+    baseUrl: process.env.BASE_URL || "/api",
   },
 
   /**
