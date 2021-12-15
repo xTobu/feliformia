@@ -1,7 +1,7 @@
 <template>
-  <div class="wrapper" id="regular">
+  <div v-loading="loading" class="wrapper" id="regular">
     <h1>飲食及如廁紀錄表</h1>
-    <form v-on:submit.prevent="submit">
+    <form v-on:submit.prevent="SubmitForm">
       <div class="d_flex">
         <div class="W50">
           <el-date-picker
@@ -21,7 +21,7 @@
             @change="dateHandler"
           >
             <el-option
-              v-for="item in shiftLists"
+              v-for="item in shiftList"
               :key="item.value"
               :label="item.label"
               :value="item.value"
@@ -129,7 +129,7 @@
       </div>
       <div class="W100">
         <button type="submit" class="btn">
-          {{ loading ? "loading" : "送出" }}
+          {{ loadingSubmit ? "儲存中..." : "送出" }}
         </button>
         <NuxtLink class="f_red" :to="prevLink">看前班紀錄</NuxtLink>
         <NuxtLink class="f_red" to="/regular">回到今天</NuxtLink>
@@ -147,14 +147,15 @@ export default {
   },
   data() {
     return {
-      loading: false,
+      loading: true,
+      loadingSubmit: false,
       pickerOptions: {
         disabledDate(time) {
           // 不可選未來的日期
           return time.getTime() > Date.now();
         },
       },
-      shiftLists: [
+      shiftList: [
         {
           value: "morning",
           label: "早班",
@@ -230,6 +231,7 @@ export default {
     await this.InitDateAndShift();
     await this.InitMemberList();
     await this.InitRegular();
+    this.loading = false;
   },
 
   async mounted() {},
@@ -259,10 +261,10 @@ export default {
       }
       this.formData.cats[index].feed_detail = 0;
     },
-    async submit() {
-      this.loading = true;
+    async SubmitForm() {
+      this.loadingSubmit = true;
       await this.UpdateRegular();
-      this.loading = false;
+      this.loadingSubmit = false;
     },
     async InitDateAndShift() {
       const {

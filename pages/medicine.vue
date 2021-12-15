@@ -1,20 +1,27 @@
-<template>
-  <div class="wrapper" id="medicine">
+<template  >
+  <div v-loading="loading" class="wrapper" id="medicine">
     <h1>餵藥及特殊飲食紀錄表</h1>
-    <form v-on:submit.prevent="sendMessage">
+    <form v-on:submit.prevent="SubmitForm">
       <div class="d_flex">
         <div class="W50">
           <el-date-picker
             v-model="formData.date"
+            :picker-options="pickerOptions"
             type="date"
+            :clearable="false"
+            @change="dateHandler"
             placeholder="請選擇日期"
           >
           </el-date-picker>
         </div>
         <div class="W50 arrow">
-          <el-select v-model="formData.time" placeholder="請選擇班別">
+          <el-select
+            v-model="formData.shift"
+            placeholder="請選擇班別"
+            @change="dateHandler"
+          >
             <el-option
-              v-for="item in timeLists"
+              v-for="item in shiftList"
               :key="item.value"
               :label="item.label"
               :value="item.value"
@@ -27,7 +34,7 @@
         <div
           class="d_flex record_item"
           :key="cat.notice"
-          v-for="cat in formData.catLists"
+          v-for="cat in formData.cats"
         >
           <div class="name">{{ cat.name }}</div>
           <div class="detail">
@@ -49,7 +56,7 @@
       <div class="W100 ps f_grey">
         *前班備註：
         <br />
-        {{ remark }}
+        {{ formData.remark }}
       </div>
       <div class="W100 mb20">
         <el-input
@@ -65,7 +72,7 @@
           class="mb20 W100"
         >
           <el-option
-            v-for="member in memberLists"
+            v-for="member in memberList"
             :key="member.value"
             :label="member.label"
             :value="member.value"
@@ -75,14 +82,11 @@
       </div>
       <div class="W100">
         <button type="submit" class="btn">
-          {{ loading ? "loading" : "送出" }}
+          {{ loadingSubmit ? "儲存中..." : "送出" }}
         </button>
-        <NuxtLink
-          class="f_red"
-          :to="{ name: 'medicine', query: { date: formData.date } }"
-          >看前班紀錄</NuxtLink
-        >
-        <NuxtLink class="f_red" to="/regular">前往飲食及便便紀錄</NuxtLink>
+        <NuxtLink class="f_red" :to="prevLink">看前班紀錄</NuxtLink>
+        <NuxtLink class="f_red" to="/medicine">回到今天</NuxtLink>
+        <NuxtLink class="f_red" to="/regular">前往飲食及如廁紀錄</NuxtLink>
       </div>
     </form>
   </div>
@@ -91,109 +95,171 @@
 <script>
 export default {
   layout: "default",
+  head: {
+    title: "餵藥及特殊飲食須知",
+  },
   data() {
     return {
-      loading: false,
-      timeLists: [
+      loading: true,
+      loadingSubmit: false,
+      pickerOptions: {
+        disabledDate(time) {
+          // 不可選未來的日期
+          return time.getTime() > Date.now();
+        },
+      },
+      shiftList: [
         {
-          value: "早班",
+          value: "morning",
           label: "早班",
         },
         {
-          value: "晚班",
+          value: "night",
           label: "晚班",
         },
       ],
-      marks: {
-        0: "沒吃",
-        25: "吃1/3",
-        50: "吃1/2",
-        75: "吃2/3",
-        100: "吃光",
-      },
-      memberLists: [
-        {
-          value: "小萬",
-          label: "小萬",
-        },
-        {
-          value: "Flo",
-          label: "Flo",
-        },
-        {
-          value: "阿俐",
-          label: "阿俐",
-        },
-        {
-          value: "小貝",
-          label: "小貝",
-        },
-        {
-          value: "俊翔",
-          label: "俊翔",
-        },
+      memberList: [
+        // {
+        //   value: "小萬",
+        //   label: "小萬",
+        // },
       ],
-      remark: "很多貓咪都拉稀，請再留意狀況！",
       formData: {
+        recordId: "",
         date: "",
-        time: "",
-        catLists: {
-          0: {
-            name: "全員",
-            treatment: "貓砂全倒",
-            reason: "蟲蟲危機",
-            done: false,
-          },
-          1: {
-            name: "蛙蛙",
-            treatment: "給腸胃處方",
-            reason: "拉稀",
-            done: false,
-          },
-          2: { name: "冬瓜", treatment: "禁罐頭", reason: "拉稀", done: false },
-          3: {
-            name: "冬瓜",
-            treatment: "冬瓜皮膚藥袋",
-            reason: "異味性皮膚炎",
-            done: false,
-          },
-        },
+        shift: "",
+        cats: [
+          // {
+          //   name: "全員",
+          //   treatment: "貓砂全倒",
+          //   reason: "蟲蟲危機",
+          //   done: false,
+          // },
+        ],
         desc: "",
         member: "",
+        remark: "",
       },
     };
   },
+  computed: {
+    prevDateShift() {
+      let date = this.formData.date
+        ? this.$dayjs(this.formData.date)
+        : this.$dayjs();
+      if (this.formData.shift == "morning") {
+        date = date.subtract(1, "day");
+      }
+      const shift = this.formData.shift == "morning" ? "night" : "morning";
+      return {
+        date: date.toDate(),
+        shift,
+      };
+    },
+    prevLink() {
+      return {
+        name: "medicine",
+        query: {
+          date: this.$dayjs(this.prevDateShift.date).format("YYYY-MM-DD"),
+          shift: this.prevDateShift.shift,
+        },
+      };
+    },
+  },
   created() {},
-  beforeMount() {
-    const {
-      query: { date },
-    } = this.$route;
-    if (!date) {
-      this.formData.date = new Date();
-    }
+  async beforeMount() {
+    await this.InitDateAndShift();
+    await this.InitMemberList();
+    await this.InitMedicine();
+    this.loading = false;
   },
   updated() {},
   mounted() {},
   methods: {
-    sendMessage() {
-      this.loading = true;
-      this.$axios
-        .post("/messages", {
-          name: this.name,
-          email: this.email,
-          phone: this.phone,
-          message: this.message,
-        })
-        .then((response) => {
-          this.success = true;
-          this.errored = false;
-        })
-        .catch((error) => {
-          this.errored = true;
-        })
-        .finally(() => {
-          this.loading = false;
+    dateHandler() {
+      let { date, shift } = this.formData;
+      date = date || new Date(date);
+      this.$router.push({
+        name: "medicine",
+        query: {
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          shift,
+        },
+      });
+    },
+    async SubmitForm() {
+      this.loadingSubmit = true;
+      await this.UpdateMedicine();
+      this.loadingSubmit = false;
+    },
+    async InitDateAndShift() {
+      const {
+        query: { date, shift },
+      } = this.$route;
+
+      this.formData.date = date ? new Date(date) : new Date();
+      this.formData.shift = shift
+        ? shift == "morning"
+          ? "morning"
+          : "night"
+        : new Date().getHours() < 15
+        ? "morning"
+        : "night";
+    },
+    async InitMemberList() {
+      const { data: volunteers } = await this.$axios.$get("/volunteer/list");
+      this.memberList = volunteers.map((volunteer) => {
+        return {
+          label: volunteer.name,
+          value: volunteer.name,
+        };
+      });
+    },
+    async InitMedicine() {
+      try {
+        const { date, shift } = this.formData;
+        const { data: regular } = await this.$axios.$get("/medicine", {
+          params: {
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            shift,
+          },
         });
+
+        const {
+          recordId,
+          cats,
+          date: strDate,
+          shift: strShift,
+          member,
+          note,
+          remark,
+        } = regular;
+
+        this.formData.recordId = recordId;
+        this.formData.date = new Date(strDate);
+        this.formData.shift = strShift;
+        this.formData.cats = cats;
+        this.formData.desc = note;
+        this.formData.remark = remark;
+        this.formData.member = member;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async UpdateMedicine() {
+      try {
+        const { recordId, date, shift, cats, note, member } = this.formData;
+        await this.$axios.$post("/medicine/update", {
+          recordId,
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          shift,
+          cats,
+          note,
+          member,
+        });
+      } catch (e) {
+        console.error(e);
+      }
     },
   },
 };
