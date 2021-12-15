@@ -24,21 +24,25 @@
         </div>
       </div>
       <div class="W100">
-        <div class="d_flex record_item th">
-          <div class="name">貓名</div>
-          <div class="notice">注意事項</div>
-          <div class="done">確認</div>
-        </div>
-
         <div
           class="d_flex record_item"
           :key="cat.notice"
           v-for="cat in formData.catLists"
         >
           <div class="name">{{ cat.name }}</div>
-          <div class="notice">{{ cat.notice }}</div>
-          <div class="done">
-            <input type="checkbox" v-model="cat.done" id="" />
+          <div class="detail">
+            <div class="d_flex treatment">
+              <p class="f_blue">事項</p>
+              <div class="d_flex">
+                <div class="txt">
+                  <font class="treatment">{{ cat.treatment }}</font>
+                  <font class="f_grey">原因：{{ cat.reason }}</font>
+                </div>
+                <div class="done">
+                  <el-checkbox v-model="cat.done">完成</el-checkbox>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -134,10 +138,25 @@ export default {
         date: "",
         time: "",
         catLists: {
-          0: { name: "全員", notice: "貓砂全倒", done: false },
-          1: { name: "蛙蛙", notice: "給腸胃處方", done: false },
-          2: { name: "冬瓜", notice: "禁罐頭", done: false },
-          3: { name: "冬瓜", notice: "冬瓜皮膚藥袋", done: false },
+          0: {
+            name: "全員",
+            treatment: "貓砂全倒",
+            reason: "蟲蟲危機",
+            done: false,
+          },
+          1: {
+            name: "蛙蛙",
+            treatment: "給腸胃處方",
+            reason: "拉稀",
+            done: false,
+          },
+          2: { name: "冬瓜", treatment: "禁罐頭", reason: "拉稀", done: false },
+          3: {
+            name: "冬瓜",
+            treatment: "冬瓜皮膚藥袋",
+            reason: "異味性皮膚炎",
+            done: false,
+          },
         },
         desc: "",
         member: "",
@@ -188,30 +207,35 @@ export default {
 }
 
 .record_item {
-  padding: 5px 0;
-}
-
-.th {
-  background-color: #6da2c2;
-  line-height: 40px;
-  padding: 0;
-
-  div {
-    color: #fff;
-    text-align: center;
-    padding: 0;
+  padding-right: 10px;
+  .detail {
+    > .d_flex {
+      align-items: baseline;
+      > div {
+        .treatment {
+          vertical-align: text-top;
+          > .d_flex {
+            flex-direction: column;
+          }
+        }
+        .done {
+          width: 40px;
+        }
+        .txt {
+          text-align: left;
+          width: calc(100% - 60px);
+          font {
+            display: block;
+            padding: 5px;
+            &.f_grey {
+              opacity: 0.9;
+              font-size: 14px;
+              font-style: italic;
+            }
+          }
+        }
+      }
+    }
   }
-  .notice,
-  .done {
-    border-left: 1px solid #fff;
-  }
-}
-.notice {
-  width: calc(100% - 135px);
-  text-align: left;
-  padding: 0 10px;
-}
-.done {
-  width: 60px;
 }
 </style>
