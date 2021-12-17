@@ -108,7 +108,7 @@
       <div class="W100 mb20">
         <el-input
           type="textarea"
-          v-model="formData.desc"
+          v-model="formData.note"
           placeholder="額外狀況回報"
         ></el-input>
       </div>
@@ -152,7 +152,9 @@ export default {
       pickerOptions: {
         disabledDate(time) {
           // 不可選未來的日期
-          return time.getTime() > Date.now();
+          let dateFrom = new Date(process.env.releaseDate);
+          dateFrom.setDate(dateFrom.getDate() - 1);
+          return time.getTime() > Date.now() || time.getTime() < dateFrom;
         },
       },
       shiftList: [
@@ -194,7 +196,7 @@ export default {
           //   urine: false,
           // },
         ],
-        desc: "",
+        note: "",
         member: "",
         remark: "",
       },
@@ -231,6 +233,7 @@ export default {
     await this.InitDateAndShift();
     await this.InitMemberList();
     await this.InitRegular();
+    await this.InitPrevRegular();
     this.loading = false;
   },
 
@@ -314,9 +317,24 @@ export default {
         this.formData.date = new Date(strDate);
         this.formData.shift = strShift;
         this.formData.cats = cats;
-        this.formData.desc = note;
+        this.formData.note = note;
         this.formData.remark = remark;
         this.formData.member = member;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+
+    async InitPrevRegular() {
+      try {
+        const { date, shift } = this.prevDateShift;
+        const { data: regular } = await this.$axios.$get("/regular", {
+          params: {
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            shift,
+          },
+        });
+        this.formData.remark = regular.note;
       } catch (e) {
         console.error(e);
       }

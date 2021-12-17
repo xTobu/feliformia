@@ -1,4 +1,6 @@
 import { table } from "../lib/airtable";
+import { ShiftMap } from "../helper/constant";
+import repoLine from "./line.repo";
 import dayjs from "dayjs";
 
 export const ListNotice = async () => {
@@ -36,35 +38,22 @@ export const Get = async (body) => {
 
 // 建立一筆初始化用的記錄
 export const Create = async (body) => {
-  const { date, shift } = body;
-
-  let prevShift = shift == "morning" ? "night" : "morning";
-  let prevDate = dayjs(date, "MM/DD/YYYY");
-  if (shift == "morning") {
-    prevDate = prevDate.subtract(1, "day");
-  }
-
-  const prevRegular = await Get({
-    date: prevDate.format("MM/DD/YYYY"),
-    shift: prevShift,
-  });
-
   let list = [];
-  const cats = await ListNotice();
-  cats.forEach((cat, index, array) => {
+  const notices = await ListNotice();
+  notices.forEach((notice, index, array) => {
     list.push({
-      ...cat,
+      ...notice,
       done: false,
     });
   });
 
+  const { date, shift } = body;
   const records = await table.medicine.main.create([
     {
       fields: {
-        shift,
         date,
+        shift,
         cats: JSON.stringify(list),
-        remark: (prevRegular[0] && prevRegular[0].note) || "",
       },
     },
   ]);
@@ -80,7 +69,13 @@ export const Create = async (body) => {
 export const Update = async (body) => {
   const { recordId, date, shift, cats, note, member } = body;
   try {
-    await table.medicine.main.update([
+    const oldData = await Get({
+      date: dayjs(date).format("MM/DD/YYYY"),
+      shift,
+    });
+    const { note: oldNote } = oldData[0];
+
+    const updates = await table.medicine.main.update([
       {
         id: recordId,
         fields: {
@@ -92,6 +87,19 @@ export const Update = async (body) => {
         },
       },
     ]);
+
+    const {
+      fields: { note: newNote },
+    } = updates[0];
+
+    if (newNote != oldNote) {
+      const textDate = dayjs(date).format("YYYY/MM/DD");
+      const textShift = ShiftMap(shift);
+      const textPush = `餵藥及特殊飲食紀錄\n---------------\n日期： ${textDate}\n班別： ${textShift}\n回報： ${
+        note || ""
+      }\n志工： ${member || ""}`;
+      await repoLine.Push({ text: textPush });
+    }
   } catch (error) {
     throw error;
   }

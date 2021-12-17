@@ -87,6 +87,11 @@ export default {
     ], // Your Day.js plugin
   },
 
+  // env using in Nuxt
+  env: {
+    releaseDate: process.env.RELEASE_DATE,
+  },
+
   /*
    ** Build configuration
    */

@@ -25,6 +25,7 @@
               :key="item.value"
               :label="item.label"
               :value="item.value"
+              :disabled="disableShift(item.value)"
             >
             </el-option>
           </el-select>
@@ -61,7 +62,7 @@
       <div class="W100 mb20">
         <el-input
           type="textarea"
-          v-model="formData.desc"
+          v-model="formData.note"
           placeholder="額外狀況回報"
         ></el-input>
       </div>
@@ -105,7 +106,9 @@ export default {
       pickerOptions: {
         disabledDate(time) {
           // 不可選未來的日期
-          return time.getTime() > Date.now();
+          let dateFrom = new Date(process.env.releaseDate);
+          dateFrom.setDate(dateFrom.getDate() - 1);
+          return time.getTime() > Date.now() || time.getTime() < dateFrom;
         },
       },
       shiftList: [
@@ -136,7 +139,7 @@ export default {
           //   done: false,
           // },
         ],
-        desc: "",
+        note: "",
         member: "",
         remark: "",
       },
@@ -171,14 +174,32 @@ export default {
     await this.InitDateAndShift();
     await this.InitMemberList();
     await this.InitMedicine();
+    await this.InitPrevMedicine();
     this.loading = false;
   },
   updated() {},
   mounted() {},
   methods: {
+    disableShift(fromShift) {
+      const { date } = this.formData;
+      return (
+        date &&
+        date.getDate() == new Date().getDate() &&
+        new Date().getHours() < 15 &&
+        fromShift == "night"
+      );
+    },
     dateHandler() {
       let { date, shift } = this.formData;
       date = date || new Date(date);
+      if (
+        date.getDate() == new Date().getDate() &&
+        new Date().getHours() < 15 &&
+        shift == "night"
+      ) {
+        this.$message.error("錯誤，請重新選擇日期");
+        return;
+      }
       this.$router.push({
         name: "medicine",
         query: {
@@ -239,13 +260,29 @@ export default {
         this.formData.date = new Date(strDate);
         this.formData.shift = strShift;
         this.formData.cats = cats;
-        this.formData.desc = note;
+        this.formData.note = note;
         this.formData.remark = remark;
         this.formData.member = member;
       } catch (e) {
         console.error(e);
       }
     },
+
+    async InitPrevMedicine() {
+      try {
+        const { date, shift } = this.prevDateShift;
+        const { data: medicine } = await this.$axios.$get("/medicine", {
+          params: {
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            shift,
+          },
+        });
+        this.formData.remark = medicine.note;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+
     async UpdateMedicine() {
       try {
         const { recordId, date, shift, cats, note, member } = this.formData;
