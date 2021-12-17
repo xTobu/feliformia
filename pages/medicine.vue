@@ -1,56 +1,68 @@
-<template>
-  <div class="wrapper" id="medicine">
+<template  >
+  <div v-loading="loading" class="wrapper" id="medicine">
     <h1>餵藥及特殊飲食紀錄表</h1>
-    <form v-on:submit.prevent="sendMessage">
+    <form v-on:submit.prevent="SubmitForm">
       <div class="d_flex">
         <div class="W50">
           <el-date-picker
             v-model="formData.date"
+            :picker-options="pickerOptions"
             type="date"
+            :clearable="false"
+            @change="dateHandler"
             placeholder="請選擇日期"
           >
           </el-date-picker>
         </div>
         <div class="W50 arrow">
-          <el-select v-model="formData.time" placeholder="請選擇班別">
+          <el-select
+            v-model="formData.shift"
+            placeholder="請選擇班別"
+            @change="dateHandler"
+          >
             <el-option
-              v-for="item in timeLists"
+              v-for="item in shiftList"
               :key="item.value"
               :label="item.label"
               :value="item.value"
+              :disabled="disableShift(item.value)"
             >
             </el-option>
           </el-select>
         </div>
       </div>
       <div class="W100">
-        <div class="d_flex record_item th">
-          <div class="name">貓名</div>
-          <div class="notice">注意事項</div>
-          <div class="done">確認</div>
-        </div>
-
         <div
           class="d_flex record_item"
           :key="cat.notice"
-          v-for="cat in formData.catLists"
+          v-for="cat in formData.cats"
         >
           <div class="name">{{ cat.name }}</div>
-          <div class="notice">{{ cat.notice }}</div>
-          <div class="done">
-            <input type="checkbox" v-model="cat.done" id="" />
+          <div class="detail">
+            <div class="d_flex treatment">
+              <p class="f_blue">事項</p>
+              <div class="d_flex">
+                <div class="txt">
+                  <font class="treatment">{{ cat.treatment }}</font>
+                  <font class="f_grey">原因：{{ cat.reason }}</font>
+                </div>
+                <div class="done">
+                  <el-checkbox v-model="cat.done">完成</el-checkbox>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
       <div class="W100 ps f_grey">
         *前班備註：
         <br />
-        {{ remark }}
+        {{ formData.remark }}
       </div>
       <div class="W100 mb20">
         <el-input
           type="textarea"
-          v-model="formData.desc"
+          v-model="formData.note"
           placeholder="額外狀況回報"
         ></el-input>
       </div>
@@ -61,7 +73,7 @@
           class="mb20 W100"
         >
           <el-option
-            v-for="member in memberLists"
+            v-for="member in memberList"
             :key="member.value"
             :label="member.label"
             :value="member.value"
@@ -71,14 +83,11 @@
       </div>
       <div class="W100">
         <button type="submit" class="btn">
-          {{ loading ? "loading" : "送出" }}
+          {{ loadingSubmit ? "儲存中..." : "送出" }}
         </button>
-        <NuxtLink
-          class="f_red"
-          :to="{ name: 'medicine', query: { date: formData.date } }"
-          >看前班紀錄</NuxtLink
-        >
-        <NuxtLink class="f_red" to="/regular">前往飲食及便便紀錄</NuxtLink>
+        <NuxtLink class="f_red" :to="prevLink">看前班紀錄</NuxtLink>
+        <NuxtLink class="f_red" to="/medicine">回到今天</NuxtLink>
+        <NuxtLink class="f_red" to="/regular">前往飲食及如廁紀錄</NuxtLink>
       </div>
     </form>
   </div>
@@ -87,96 +96,207 @@
 <script>
 export default {
   layout: "default",
+  head: {
+    title: "餵藥及特殊飲食須知",
+  },
   data() {
     return {
-      loading: false,
-      timeLists: [
+      loading: true,
+      loadingSubmit: false,
+      pickerOptions: {
+        disabledDate(time) {
+          // 不可選未來的日期
+          let dateFrom = new Date(process.env.releaseDate);
+          dateFrom.setDate(dateFrom.getDate() - 1);
+          return time.getTime() > Date.now() || time.getTime() < dateFrom;
+        },
+      },
+      shiftList: [
         {
-          value: "早班",
+          value: "morning",
           label: "早班",
         },
         {
-          value: "晚班",
+          value: "night",
           label: "晚班",
         },
       ],
-      marks: {
-        0: "沒吃",
-        25: "吃1/3",
-        50: "吃1/2",
-        75: "吃2/3",
-        100: "吃光",
-      },
-      memberLists: [
-        {
-          value: "小萬",
-          label: "小萬",
-        },
-        {
-          value: "Flo",
-          label: "Flo",
-        },
-        {
-          value: "阿俐",
-          label: "阿俐",
-        },
-        {
-          value: "小貝",
-          label: "小貝",
-        },
-        {
-          value: "俊翔",
-          label: "俊翔",
-        },
+      memberList: [
+        // {
+        //   value: "小萬",
+        //   label: "小萬",
+        // },
       ],
-      remark: "很多貓咪都拉稀，請再留意狀況！",
       formData: {
+        recordId: "",
         date: "",
-        time: "",
-        catLists: {
-          0: { name: "全員", notice: "貓砂全倒", done: false },
-          1: { name: "蛙蛙", notice: "給腸胃處方", done: false },
-          2: { name: "冬瓜", notice: "禁罐頭", done: false },
-          3: { name: "冬瓜", notice: "冬瓜皮膚藥袋", done: false },
-        },
-        desc: "",
+        shift: "",
+        cats: [
+          // {
+          //   name: "全員",
+          //   treatment: "貓砂全倒",
+          //   reason: "蟲蟲危機",
+          //   done: false,
+          // },
+        ],
+        note: "",
         member: "",
+        remark: "",
       },
     };
   },
+  computed: {
+    prevDateShift() {
+      let date = this.formData.date
+        ? this.$dayjs(this.formData.date)
+        : this.$dayjs();
+      if (this.formData.shift == "morning") {
+        date = date.subtract(1, "day");
+      }
+      const shift = this.formData.shift == "morning" ? "night" : "morning";
+      return {
+        date: date.toDate(),
+        shift,
+      };
+    },
+    prevLink() {
+      return {
+        name: "medicine",
+        query: {
+          date: this.$dayjs(this.prevDateShift.date).format("YYYY-MM-DD"),
+          shift: this.prevDateShift.shift,
+        },
+      };
+    },
+  },
   created() {},
-  beforeMount() {
-    const {
-      query: { date },
-    } = this.$route;
-    if (!date) {
-      this.formData.date = new Date();
-    }
+  async beforeMount() {
+    await this.InitDateAndShift();
+    await this.InitMemberList();
+    await this.InitMedicine();
+    await this.InitPrevMedicine();
+    this.loading = false;
   },
-  updated() {
-    // console.log(this.catLists);
-  },
+  updated() {},
   mounted() {},
   methods: {
-    sendMessage() {
-      this.loading = true;
-      this.$axios
-        .post("/messages", {
-          name: this.name,
-          email: this.email,
-          phone: this.phone,
-          message: this.message,
-        })
-        .then((response) => {
-          this.success = true;
-          this.errored = false;
-        })
-        .catch((error) => {
-          this.errored = true;
-        })
-        .finally(() => {
-          this.loading = false;
+    disableShift(fromShift) {
+      const { date } = this.formData;
+      return (
+        date &&
+        date.getDate() == new Date().getDate() &&
+        new Date().getHours() < 15 &&
+        fromShift == "night"
+      );
+    },
+    dateHandler() {
+      let { date, shift } = this.formData;
+      date = date || new Date(date);
+      if (
+        date.getDate() == new Date().getDate() &&
+        new Date().getHours() < 15 &&
+        shift == "night"
+      ) {
+        this.$message.error("錯誤，請重新選擇日期");
+        return;
+      }
+      this.$router.push({
+        name: "medicine",
+        query: {
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          shift,
+        },
+      });
+    },
+    async SubmitForm() {
+      this.loadingSubmit = true;
+      await this.UpdateMedicine();
+      this.loadingSubmit = false;
+    },
+    async InitDateAndShift() {
+      const {
+        query: { date, shift },
+      } = this.$route;
+
+      this.formData.date = date ? new Date(date) : new Date();
+      this.formData.shift = shift
+        ? shift == "morning"
+          ? "morning"
+          : "night"
+        : new Date().getHours() < 15
+        ? "morning"
+        : "night";
+    },
+    async InitMemberList() {
+      const { data: volunteers } = await this.$axios.$get("/volunteer/list");
+      this.memberList = volunteers.map((volunteer) => {
+        return {
+          label: volunteer.name,
+          value: volunteer.name,
+        };
+      });
+    },
+    async InitMedicine() {
+      try {
+        const { date, shift } = this.formData;
+        const { data: regular } = await this.$axios.$get("/medicine", {
+          params: {
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            shift,
+          },
         });
+
+        const {
+          recordId,
+          cats,
+          date: strDate,
+          shift: strShift,
+          member,
+          note,
+          remark,
+        } = regular;
+
+        this.formData.recordId = recordId;
+        this.formData.date = new Date(strDate);
+        this.formData.shift = strShift;
+        this.formData.cats = cats;
+        this.formData.note = note;
+        this.formData.remark = remark;
+        this.formData.member = member;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+
+    async InitPrevMedicine() {
+      try {
+        const { date, shift } = this.prevDateShift;
+        const { data: medicine } = await this.$axios.$get("/medicine", {
+          params: {
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            shift,
+          },
+        });
+        this.formData.remark = medicine.note;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+
+    async UpdateMedicine() {
+      try {
+        const { recordId, date, shift, cats, note, member } = this.formData;
+        await this.$axios.$post("/medicine/update", {
+          recordId,
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          shift,
+          cats,
+          note,
+          member,
+        });
+      } catch (e) {
+        console.error(e);
+      }
     },
   },
 };
@@ -190,30 +310,35 @@ export default {
 }
 
 .record_item {
-  padding: 5px 0;
-}
-
-.th {
-  background-color: #6da2c2;
-  line-height: 40px;
-  padding: 0;
-
-  div {
-    color: #fff;
-    text-align: center;
-    padding: 0;
+  padding-right: 10px;
+  .detail {
+    > .d_flex {
+      align-items: baseline;
+      > div {
+        .treatment {
+          vertical-align: text-top;
+          > .d_flex {
+            flex-direction: column;
+          }
+        }
+        .done {
+          width: 40px;
+        }
+        .txt {
+          text-align: left;
+          width: calc(100% - 60px);
+          font {
+            display: block;
+            padding: 5px;
+            &.f_grey {
+              opacity: 0.9;
+              font-size: 14px;
+              font-style: italic;
+            }
+          }
+        }
+      }
+    }
   }
-  .notice,
-  .done {
-    border-left: 1px solid #fff;
-  }
-}
-.notice {
-  width: calc(100% - 135px);
-  text-align: left;
-  padding: 0 10px;
-}
-.done {
-  width: 60px;
 }
 </style>
