@@ -1,14 +1,17 @@
 import express from "express";
 import { List, Get } from "./volunteer.repo";
 import { MakeSuccess, MakeFail } from "../helper/response";
-// Controller
+
+/*
+ ** Controller
+ */
 const GetVolunteers = async (req, res, next) => {
   try {
     const volunteers = await List();
-    MakeSuccess(res, volunteers);
+    return MakeSuccess(res, volunteers);
   } catch (error) {
     const { message } = error;
-    MakeFail(res, 400, 1, message);
+    return MakeFail(res, 400, 1, message);
   }
 };
 
@@ -16,14 +19,16 @@ const FindVolunteer = async (req, res, next) => {
   const { recordId } = req.params;
   try {
     const volunteer = await Get(recordId);
-    MakeSuccess(res, volunteer);
+    return MakeSuccess(res, volunteer);
   } catch (error) {
     const { message } = error;
-    MakeFail(res, 400, 1, message);
+    return MakeFail(res, 400, 1, message);
   }
 };
 
-// Router
+/*
+ ** Router
+ */
 const router = express.Router();
 
 router.get("/list", GetVolunteers);

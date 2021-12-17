@@ -1,7 +1,10 @@
 import express from "express";
 import { Push } from "./line.repo";
 import { MakeSuccess, MakeFail } from "../helper/response";
-// Controller
+
+/*
+ ** Controller
+ */
 const PushMessage = async (req, res, next) => {
   const { text } = req.body;
   if (!text) {
@@ -17,7 +20,9 @@ const PushMessage = async (req, res, next) => {
   }
 };
 
-// Router
+/*
+ ** Router
+ */
 const router = express.Router();
 
 router.post("/message/push", PushMessage);

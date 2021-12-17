@@ -88,9 +88,9 @@ export const Update = async (body) => {
     if (newNote != oldNote) {
       const textDate = dayjs(date).format("YYYY/MM/DD");
       const textShift = ShiftMap(shift);
-      const textPush = `飲食及如廁紀錄\n------------\n日期： ${textDate}\n班別： ${textShift}\n回報： ${
-        note || ""
-      }\n志工： ${member || ""}`;
+      const textPush = `飲食及如廁紀錄\n------------\n日期： ${textDate}\n班別： ${textShift}\n志工： ${
+        member || ""
+      }\n回報：\n${note || ""}`;
       await repoLine.Push({ text: textPush });
     }
   } catch (error) {

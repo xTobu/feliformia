@@ -19,7 +19,7 @@ const FindRegular = async (req, res, next) => {
     }
   } catch (error) {
     const { message } = error;
-    MakeFail(res, 400, 1, message);
+    return MakeFail(res, 400, 1, message);
   }
 };
 
@@ -31,7 +31,7 @@ const UpdateRegular = async (req, res, next) => {
     return MakeSuccess(res, "");
   } catch (error) {
     const { message } = error;
-    MakeFail(res, 400, 1, message);
+    return MakeFail(res, 400, 1, message);
   }
 };
 

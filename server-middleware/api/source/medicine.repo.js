@@ -3,9 +3,11 @@ import { ShiftMap } from "../helper/constant";
 import repoLine from "./line.repo";
 import dayjs from "dayjs";
 
-export const ListNotice = async () => {
+export const ListNotice = async (body) => {
+  const { shift } = body;
   const selector = table.medicine.notice.select({
     view: "Grid view",
+    filterByFormula: `OR(shift='both',shift='${shift}')`,
   });
   const records = await selector.firstPage();
   let result = [];
@@ -39,7 +41,7 @@ export const Get = async (body) => {
 // 建立一筆初始化用的記錄
 export const Create = async (body) => {
   let list = [];
-  const notices = await ListNotice();
+  const notices = await ListNotice(body);
   notices.forEach((notice, index, array) => {
     list.push({
       ...notice,
@@ -95,9 +97,9 @@ export const Update = async (body) => {
     if (newNote != oldNote) {
       const textDate = dayjs(date).format("YYYY/MM/DD");
       const textShift = ShiftMap(shift);
-      const textPush = `餵藥及特殊飲食紀錄\n---------------\n日期： ${textDate}\n班別： ${textShift}\n回報： ${
-        note || ""
-      }\n志工： ${member || ""}`;
+      const textPush = `餵藥及特殊飲食紀錄\n---------------\n日期： ${textDate}\n班別： ${textShift}\n志工： ${
+        member || ""
+      }\n回報：\n${note || ""}`;
       await repoLine.Push({ text: textPush });
     }
   } catch (error) {
