@@ -106,9 +106,10 @@
         </div>
       </div>
       <div class="W100 ps f_grey">
-        *前班備註：
-        <br />
-        {{ formData.remark }}
+        <b>*前班備註：</b>
+        <span style="white-space: pre-line">
+          {{ formData.remark }}
+        </span>
       </div>
       <div class="W100 mb20">
         <el-input
