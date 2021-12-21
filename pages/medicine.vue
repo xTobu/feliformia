@@ -272,6 +272,18 @@ export default {
         : new Date().getHours() < 15
         ? "morning"
         : "night";
+
+      // 有效日期限制
+      let dateRelease = new Date(process.env.releaseDate);
+      dateRelease.setDate(dateRelease.getDate() - 1);
+      if (
+        this.formData.date > Date.now() ||
+        this.formData.date <= dateRelease
+      ) {
+        this.$router.push({
+          name: "regular",
+        });
+      }
     },
     async InitMemberList() {
       const { data: volunteers } = await this.$axios.$get("/volunteer/list");
