@@ -107,6 +107,7 @@ export default {
   env: {
     releaseDate: process.env.RELEASE_DATE,
     disabledDays: process.env.DISABLED_DAYS,
+    deploySite: process.env.DEPLOY_SITE,
   },
 
   /*
