@@ -58,7 +58,7 @@ export default {
   /*
    ** Global CSS
    */
-  css: ["element-ui/lib/theme-chalk/index.css"],
+  css: ["element-ui/lib/theme-chalk/index.css", "animate.css/animate.min.css"],
   /*
    ** Plugins to load before mounting the App
    */
@@ -81,7 +81,7 @@ export default {
   /*
    ** Nuxt.js modules
    */
-  modules: ["@nuxtjs/axios", "@nuxtjs/dayjs"],
+  modules: ["@nuxtjs/axios", "@nuxtjs/dayjs", "vue-sweetalert2/nuxt"],
 
   /**
    * @nuxtjs/axios 設定預設
@@ -106,6 +106,7 @@ export default {
   // env using in Nuxt
   env: {
     releaseDate: process.env.RELEASE_DATE,
+    disabledDays: process.env.DISABLED_DAYS,
   },
 
   /*

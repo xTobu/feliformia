@@ -1,7 +1,7 @@
 <template>
   <div v-loading="loading" class="wrapper" id="regular">
     <h1>飲食及如廁紀錄表</h1>
-    <form v-on:submit.prevent="SubmitForm">
+    <form v-on:submit.prevent="Submit">
       <div class="d_flex">
         <div class="W50">
           <el-date-picker
@@ -43,6 +43,7 @@
               <div class="d_flex">
                 <el-checkbox
                   v-model="cat.feed"
+                  :disabled="isDisabled"
                   @change="(e) => foodHandler('feed', index)"
                   >乾</el-checkbox
                 >
@@ -51,7 +52,7 @@
                   :step="25"
                   :marks="marks"
                   :show-tooltip="false"
-                  :disabled="!cat.feed"
+                  :disabled="isDisabled || !cat.feed"
                 >
                 </el-slider>
               </div>
@@ -61,6 +62,7 @@
               <div class="d_flex">
                 <el-checkbox
                   v-model="cat.can"
+                  :disabled="isDisabled"
                   @change="(e) => foodHandler('can', index)"
                   >罐</el-checkbox
                 >
@@ -69,7 +71,7 @@
                   :step="25"
                   :marks="marks"
                   :show-tooltip="false"
-                  :disabled="!cat.can"
+                  :disabled="isDisabled || !cat.can"
                 >
                 </el-slider>
               </div>
@@ -78,9 +80,12 @@
               <p class="f_blue">排泄</p>
               <div class="d_flex">
                 <div class="W40 d_flex">
-                  <el-checkbox v-model="cat.urine">尿</el-checkbox>
+                  <el-checkbox v-model="cat.urine" :disabled="isDisabled"
+                    >尿</el-checkbox
+                  >
                   <el-checkbox
                     v-model="cat.feces"
+                    :disabled="isDisabled"
                     @change="(e) => fecesHandler(e, index)"
                     >便</el-checkbox
                   >
@@ -88,7 +93,7 @@
                 <div class="W60 d_flex">
                   <el-radio-group
                     v-model="cat.feces_warning"
-                    :disabled="!cat.feces"
+                    :disabled="isDisabled || !cat.feces"
                   >
                     <el-radio label="正常">正常</el-radio>
                     <el-radio label="軟便">軟便</el-radio>
@@ -109,12 +114,14 @@
         <el-input
           type="textarea"
           v-model="formData.note"
+          :disabled="isDisabled"
           placeholder="額外狀況回報"
         ></el-input>
       </div>
       <div class="W100">
         <el-select
           v-model="formData.member"
+          :disabled="isDisabled"
           placeholder="請選擇填表志工"
           class="mb20 W100"
         >
@@ -128,7 +135,7 @@
         </el-select>
       </div>
       <div class="W100">
-        <button type="submit" class="btn">
+        <button type="submit" class="btn" v-show="!isDisabled">
           {{ loadingSubmit ? "儲存中..." : "送出" }}
         </button>
         <NuxtLink class="f_red" :to="prevLink">看前班紀錄</NuxtLink>
@@ -225,6 +232,14 @@ export default {
         },
       };
     },
+    isDisabled() {
+      const { date } = this.formData;
+      const day = this.$dayjs(date).get("date");
+      const disabled = this.$dayjs()
+        .subtract(process.env.disabledDays, "day")
+        .get("date");
+      return day < disabled;
+    },
   },
 
   created() {},
@@ -233,8 +248,10 @@ export default {
     await this.InitDateAndShift();
     await this.InitMemberList();
     await this.InitRegular();
-    await this.InitPrevRegular();
+
     this.loading = false;
+
+    await this.InitPrevRegular();
   },
 
   async mounted() {},
@@ -263,6 +280,31 @@ export default {
         return;
       }
       this.formData.cats[index].feed_detail = 0;
+    },
+    async Submit() {
+      if (!this.formData.member) {
+        this.$message.error("請選擇填表志工");
+        return;
+      }
+
+      try {
+        const { isConfirmed, dismiss } = await this.$swal.fire({
+          title: "確定送出資料嗎？",
+          showClass: {
+            popup: "animate__animated animate__fadeIn animate__faster",
+          },
+          hideClass: {
+            popup: "",
+          },
+          showCancelButton: true,
+          cancelButtonText: "取消",
+          confirmButtonColor: "#b33a39",
+          confirmButtonText: "是的",
+        });
+        if (isConfirmed) {
+          await this.SubmitForm();
+        }
+      } catch (error) {}
     },
     async SubmitForm() {
       this.loadingSubmit = true;
