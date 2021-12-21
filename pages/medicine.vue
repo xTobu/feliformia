@@ -1,7 +1,7 @@
 <template  >
   <div v-loading="loading" class="wrapper" id="medicine">
     <h1>餵藥及特殊飲食紀錄表</h1>
-    <form v-on:submit.prevent="SubmitForm">
+    <form v-on:submit.prevent="Submit">
       <div class="d_flex">
         <div class="W50">
           <el-date-picker
@@ -47,7 +47,9 @@
                   <font class="f_grey">原因：{{ cat.reason }}</font>
                 </div>
                 <div class="done">
-                  <el-checkbox v-model="cat.done">完成</el-checkbox>
+                  <el-checkbox v-model="cat.done" :disabled="isDisabled"
+                    >完成</el-checkbox
+                  >
                 </div>
               </div>
             </div>
@@ -55,20 +57,24 @@
         </div>
       </div>
       <div class="W100 ps f_grey">
-        *前班備註：
-        <br />
-        {{ formData.remark }}
+        <b>*前班備註：</b>
+        <span style="white-space: pre-line">
+          {{ formData.remark }}
+        </span>
       </div>
       <div class="W100 mb20">
         <el-input
           type="textarea"
           v-model="formData.note"
+          :disabled="isDisabled"
           placeholder="額外狀況回報"
         ></el-input>
       </div>
       <div class="W100">
         <el-select
           v-model="formData.member"
+          filterable
+          :disabled="isDisabled"
           placeholder="請選擇填表志工"
           class="mb20 W100"
         >
@@ -82,7 +88,7 @@
         </el-select>
       </div>
       <div class="W100">
-        <button type="submit" class="btn">
+        <button type="submit" class="btn" v-show="!isDisabled">
           {{ loadingSubmit ? "儲存中..." : "送出" }}
         </button>
         <NuxtLink class="f_red" :to="prevLink">看前班紀錄</NuxtLink>
@@ -168,14 +174,24 @@ export default {
         },
       };
     },
+    isDisabled() {
+      const { date } = this.formData;
+      const day = this.$dayjs(date).get("date");
+      const disabled = this.$dayjs()
+        .subtract(process.env.disabledDays, "day")
+        .get("date");
+      return day < disabled;
+    },
   },
   created() {},
   async beforeMount() {
     await this.InitDateAndShift();
     await this.InitMemberList();
     await this.InitMedicine();
-    await this.InitPrevMedicine();
+
     this.loading = false;
+
+    await this.InitPrevMedicine();
   },
   updated() {},
   mounted() {},
@@ -208,7 +224,37 @@ export default {
         },
       });
     },
+    async Submit() {
+      if (!this.formData.member) {
+        this.$message.error("請選擇填表志工");
+        return;
+      }
+
+      try {
+        const { isConfirmed, dismiss } = await this.$swal.fire({
+          title: "確定送出資料嗎？",
+          showClass: {
+            popup: "animate__animated animate__fadeIn animate__faster",
+          },
+          hideClass: {
+            popup: "",
+          },
+          showCancelButton: true,
+          cancelButtonText: "取消",
+          confirmButtonColor: "#b33a39",
+          confirmButtonText: "是的",
+        });
+        if (isConfirmed) {
+          await this.SubmitForm();
+        }
+      } catch (error) {}
+    },
     async SubmitForm() {
+      if (!this.formData.member) {
+        this.$message.error("請選擇填表志工");
+        return;
+      }
+
       this.loadingSubmit = true;
       await this.UpdateMedicine();
       this.loadingSubmit = false;
@@ -226,6 +272,18 @@ export default {
         : new Date().getHours() < 15
         ? "morning"
         : "night";
+
+      // 有效日期限制
+      let dateRelease = new Date(process.env.releaseDate);
+      dateRelease.setDate(dateRelease.getDate() - 1);
+      if (
+        this.formData.date > Date.now() ||
+        this.formData.date <= dateRelease
+      ) {
+        this.$router.push({
+          name: "regular",
+        });
+      }
     },
     async InitMemberList() {
       const { data: volunteers } = await this.$axios.$get("/volunteer/list");

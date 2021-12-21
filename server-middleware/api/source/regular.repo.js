@@ -91,7 +91,11 @@ export const Update = async (body) => {
       const textPush = `飲食及如廁紀錄\n------------\n日期： ${textDate}\n班別： ${textShift}\n志工： ${
         member || ""
       }\n回報：\n${note || ""}`;
-      await repoLine.Push({ text: textPush });
+      const textSite =
+        process.env.DEPLOY_SITE == "feliformia"
+          ? ""
+          : `[${process.env.DEPLOY_SITE}]\n`;
+      await repoLine.Push({ text: textSite + textPush });
     }
   } catch (error) {
     throw error;
