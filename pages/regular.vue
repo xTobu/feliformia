@@ -121,6 +121,7 @@
       <div class="W100">
         <el-select
           v-model="formData.member"
+          filterable
           :disabled="isDisabled"
           placeholder="請選擇填表志工"
           class="mb20 W100"
