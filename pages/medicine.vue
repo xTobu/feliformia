@@ -231,8 +231,16 @@ export default {
       }
 
       try {
+        const shiftMap = {
+          morning: "早班",
+          night: "晚班",
+        };
+        const { date, shift, member } = this.formData;
         const { isConfirmed, dismiss } = await this.$swal.fire({
-          title: "確定送出資料嗎？",
+          // title: "",
+          html: `<b><h3>您即將送出資料</h3></b>${this.$dayjs(date).format(
+            "YYYY-MM-DD"
+          )}<br/>${shiftMap[shift]}<br/>${member}`,
           showClass: {
             popup: "animate__animated animate__fadeIn animate__faster",
           },
