@@ -44,7 +44,9 @@
               <div class="d_flex">
                 <div class="txt">
                   <font class="treatment">{{ cat.treatment }}</font>
-                  <font class="f_grey">原因：{{ cat.reason }}</font>
+                  <font class="f_grey">{{
+                    cat.reason && `原因：${cat.reason}`
+                  }}</font>
                 </div>
                 <div class="done">
                   <el-checkbox v-model="cat.done" :disabled="isDisabled"
