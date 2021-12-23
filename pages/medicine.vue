@@ -59,10 +59,12 @@
         </div>
       </div>
       <div class="W100 ps f_grey">
-        <b>*前班備註：</b>
-        <span style="white-space: pre-line">
-          {{ formData.remark }}
-        </span>
+        <template v-if="formData.remark">
+          <b>*前班備註：</b>
+          <span style="white-space: pre-line">
+            {{ formData.remark }}
+          </span>
+        </template>
       </div>
       <div class="W100 mb20">
         <el-input
