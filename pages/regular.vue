@@ -33,8 +33,8 @@
       <div class="W100">
         <div
           class="d_flex record_item"
-          :key="cat.name"
           v-for="(cat, index) in formData.cats"
+          :key="`${cat.name}${index}`"
         >
           <div class="name">{{ cat.name }}</div>
           <div class="detail">
