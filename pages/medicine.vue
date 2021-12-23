@@ -399,7 +399,6 @@ export default {
             &.f_grey {
               opacity: 0.9;
               font-size: 14px;
-              font-style: italic;
             }
           }
         }
