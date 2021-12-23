@@ -1,6 +1,6 @@
 <template>
   <div>
-    <nuxt />
+    <nuxt :key="$route.fullPath" />
     <Footer />
   </div>
 </template>
@@ -173,8 +173,8 @@ select {
   border: none;
   border-radius: 4px;
   border: 1px solid #ccc;
-  height: 50px;
-  line-height: 50px;
+  // height: 50px;
+  // line-height: 50px;
   padding: 0 10px;
   width: 100%;
   color: #606266;
@@ -280,6 +280,9 @@ a {
   &:nth-child(even) {
     background-color: #f4f5f5;
   }
+  &:first-child {
+    border-top: 1px solid #ccc;
+  }
   .name {
     display: inline-block;
     padding: 0 13px;
@@ -288,7 +291,7 @@ a {
     top: 0;
     background-color: #8e8783;
     color: #fff;
-    font-size: 12px;
+    font-size: 13px;
     line-height: 20px;
     height: 23px;
   }

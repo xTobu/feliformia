@@ -1,20 +1,27 @@
 <template>
-  <div class="wrapper" id="regular">
+  <div v-loading="loading" class="wrapper" id="regular">
     <h1>飲食及如廁紀錄表</h1>
-    <form v-on:submit.prevent="sendMessage">
+    <form v-on:submit.prevent="Submit">
       <div class="d_flex">
         <div class="W50">
           <el-date-picker
             v-model="formData.date"
+            :picker-options="pickerOptions"
             type="date"
+            :clearable="false"
+            @change="dateHandler"
             placeholder="請選擇日期"
           >
           </el-date-picker>
         </div>
         <div class="W50 arrow">
-          <el-select v-model="formData.time" placeholder="請選擇班別">
+          <el-select
+            v-model="formData.shift"
+            placeholder="請選擇班別"
+            @change="dateHandler"
+          >
             <el-option
-              v-for="item in timeLists"
+              v-for="item in shiftList"
               :key="item.value"
               :label="item.label"
               :value="item.value"
@@ -26,8 +33,8 @@
       <div class="W100">
         <div
           class="d_flex record_item"
-          :key="cat.name"
-          v-for="(cat, index) in formData.catLists"
+          v-for="(cat, index) in formData.cats"
+          :key="`${cat.name}${index}`"
         >
           <div class="name">{{ cat.name }}</div>
           <div class="detail">
@@ -36,6 +43,7 @@
               <div class="d_flex">
                 <el-checkbox
                   v-model="cat.feed"
+                  :disabled="isDisabled"
                   @change="(e) => foodHandler('feed', index)"
                   >乾</el-checkbox
                 >
@@ -44,7 +52,7 @@
                   :step="25"
                   :marks="marks"
                   :show-tooltip="false"
-                  :disabled="!cat.feed"
+                  :disabled="isDisabled || !cat.feed"
                 >
                 </el-slider>
               </div>
@@ -54,6 +62,7 @@
               <div class="d_flex">
                 <el-checkbox
                   v-model="cat.can"
+                  :disabled="isDisabled"
                   @change="(e) => foodHandler('can', index)"
                   >罐</el-checkbox
                 >
@@ -62,7 +71,7 @@
                   :step="25"
                   :marks="marks"
                   :show-tooltip="false"
-                  :disabled="!cat.can"
+                  :disabled="isDisabled || !cat.can"
                 >
                 </el-slider>
               </div>
@@ -71,58 +80,57 @@
               <p class="f_blue">排泄</p>
               <div class="d_flex">
                 <div class="W40 d_flex">
-                  <el-checkbox v-model="cat.urine">尿</el-checkbox>
+                  <el-checkbox v-model="cat.urine" :disabled="isDisabled"
+                    >尿</el-checkbox
+                  >
                   <el-checkbox
                     v-model="cat.feces"
+                    :disabled="isDisabled"
                     @change="(e) => fecesHandler(e, index)"
                     >便</el-checkbox
                   >
                 </div>
                 <div class="W60 d_flex">
-                  <el-radio-group v-model="cat.feces_warning">
-                    <el-radio :label="'正常'" :disabled="!cat.feces"
-                      >正常</el-radio
-                    >
-                    <el-radio :label="'軟'" :disabled="!cat.feces"
-                      >軟便</el-radio
-                    >
-                    <el-radio :label="'拉稀'" :disabled="!cat.feces"
-                      >拉稀</el-radio
-                    >
+                  <el-radio-group
+                    v-model="cat.feces_warning"
+                    :disabled="isDisabled || !cat.feces"
+                  >
+                    <el-radio label="正常">正常</el-radio>
+                    <el-radio label="軟便">軟便</el-radio>
+                    <el-radio label="拉稀">拉稀</el-radio>
                   </el-radio-group>
                 </div>
               </div>
-
-              <!-- <div class="W50 d_flex j_start mb0">
-                <p class="f_blue">尿</p>
-                <div>
-                  <input type="checkbox" v-model="cat.urine" id="" />
-                </div>
-              </div> -->
             </div>
           </div>
         </div>
       </div>
       <div class="W100 ps f_grey">
-        *前班備註：
-        <br />
-        {{ remark }}
+        <template v-if="formData.remark">
+          <b>*前班備註：</b>
+          <span style="white-space: pre-line">
+            {{ formData.remark }}
+          </span>
+        </template>
       </div>
       <div class="W100 mb20">
         <el-input
           type="textarea"
-          v-model="formData.desc"
+          v-model="formData.note"
+          :disabled="isDisabled"
           placeholder="額外狀況回報"
         ></el-input>
       </div>
       <div class="W100">
         <el-select
           v-model="formData.member"
+          filterable
+          :disabled="isDisabled"
           placeholder="請選擇填表志工"
           class="mb20 W100"
         >
           <el-option
-            v-for="member in memberLists"
+            v-for="member in memberList"
             :key="member.value"
             :label="member.label"
             :value="member.value"
@@ -131,14 +139,11 @@
         </el-select>
       </div>
       <div class="W100">
-        <button type="submit" class="btn">
-          {{ loading ? "loading" : "送出" }}
+        <button type="submit" class="btn" v-show="!isDisabled">
+          {{ loadingSubmit ? "儲存中..." : "送出" }}
         </button>
-        <NuxtLink
-          class="f_red"
-          :to="{ name: 'regular', query: { date: formData.date } }"
-          >看前班紀錄</NuxtLink
-        >
+        <NuxtLink class="f_red" :to="prevLink">看前班紀錄</NuxtLink>
+        <NuxtLink class="f_red" to="/regular">回到今天</NuxtLink>
         <NuxtLink class="f_red" to="/medicine">前往餵藥及特殊飲食須知</NuxtLink>
       </div>
     </form>
@@ -148,16 +153,28 @@
 <script>
 export default {
   layout: "default",
+  head: {
+    title: "飲食及如廁紀錄表",
+  },
   data() {
     return {
-      loading: false,
-      timeLists: [
+      loading: true,
+      loadingSubmit: false,
+      pickerOptions: {
+        disabledDate(time) {
+          // 不可選未來的日期
+          let dateFrom = new Date(process.env.releaseDate);
+          dateFrom.setDate(dateFrom.getDate() - 1);
+          return time.getTime() > Date.now() || time.getTime() < dateFrom;
+        },
+      },
+      shiftList: [
         {
-          value: "早班",
+          value: "morning",
           label: "早班",
         },
         {
-          value: "晚班",
+          value: "night",
           label: "晚班",
         },
       ],
@@ -168,153 +185,241 @@ export default {
         75: "吃2/3",
         100: "吃光",
       },
-      memberLists: [
-        {
-          value: "小萬",
-          label: "小萬",
-        },
-        {
-          value: "Flo",
-          label: "Flo",
-        },
-        {
-          value: "阿俐",
-          label: "阿俐",
-        },
-        {
-          value: "小貝",
-          label: "小貝",
-        },
-        {
-          value: "俊翔",
-          label: "俊翔",
-        },
+      memberList: [
+        // {
+        //   value: "小萬",
+        //   label: "小萬",
+        // },
       ],
-      remark: "很多貓咪都拉稀，請再留意狀況！",
       formData: {
+        recordId: "",
         date: "",
-        time: "",
-        catLists: {
-          0: {
-            name: "大哥",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: null,
-            feces_warning: null,
-            urine: false,
-          },
-          1: {
-            name: "噗噗",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: null,
-            feces_warning: null,
-            urine: false,
-          },
-          2: {
-            name: "亮亮",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: null,
-            feces_warning: null,
-            urine: false,
-          },
-          3: {
-            name: "冬瓜",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: null,
-            feces_warning: null,
-            urine: false,
-          },
-          4: {
-            name: "蛋蛋",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: null,
-            feces_warning: null,
-            urine: false,
-          },
-          5: {
-            name: "烏魯木",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: null,
-            urine: false,
-          },
-          6: {
-            name: "大樹",
-            feed: true,
-            feed_detail: 0,
-            can: false,
-            can_detail: 0,
-            feces: null,
-            urine: false,
-          },
-        },
-        desc: "",
+        shift: "",
+        cats: [
+          // {
+          //   name: "大哥",
+          //   feed: true,
+          //   feed_detail: 0,
+          //   can: false,
+          //   can_detail: 0,
+          //   feces: false,
+          //   feces_warning: null,
+          //   urine: false,
+          // },
+        ],
+        note: "",
         member: "",
+        remark: "",
       },
     };
   },
+  computed: {
+    prevDateShift() {
+      let date = this.formData.date
+        ? this.$dayjs(this.formData.date)
+        : this.$dayjs();
+      if (this.formData.shift == "morning") {
+        date = date.subtract(1, "day");
+      }
+      const shift = this.formData.shift == "morning" ? "night" : "morning";
+      return {
+        date: date.toDate(),
+        shift,
+      };
+    },
+    prevLink() {
+      return {
+        name: "regular",
+        query: {
+          date: this.$dayjs(this.prevDateShift.date).format("YYYY-MM-DD"),
+          shift: this.prevDateShift.shift,
+        },
+      };
+    },
+    isDisabled() {
+      const { date } = this.formData;
+      const day = this.$dayjs(date).get("date");
+      const disabled = this.$dayjs()
+        .subtract(process.env.disabledDays, "day")
+        .get("date");
+      return day < disabled;
+    },
+  },
+
   created() {},
-  beforeMount() {
-    const {
-      query: { date, time },
-    } = this.$route;
-    if (!date) {
-      this.formData.date = new Date();
-    }
-    if (!time) {
-      this.formData.time = new Date().getHours() > 15 ? "晚班" : "早班";
-    }
+
+  async beforeMount() {
+    await this.InitDateAndShift();
+    await this.InitMemberList();
+    await this.InitRegular();
+
+    this.loading = false;
+
+    await this.InitPrevRegular();
   },
-  updated() {
-    // console.log(this.catLists);
-  },
-  mounted() {},
+
+  async mounted() {},
+
+  updated() {},
+
   methods: {
+    dateHandler() {
+      let { date, shift } = this.formData;
+      date = date || new Date(date);
+      this.$router.push({
+        name: "regular",
+        query: {
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          shift,
+        },
+      });
+    },
+
     fecesHandler(e, index) {
-      this.formData.catLists[index].feces_warning = e ? "正常" : null;
+      this.formData.cats[index].feces_warning = e ? "正常" : null;
     },
     foodHandler(type, index) {
       if (type === "can") {
-        this.formData.catLists[index].can_detail = 0;
+        this.formData.cats[index].can_detail = 0;
         return;
       }
-      this.formData.catLists[index].feed_detail = 0;
+      this.formData.cats[index].feed_detail = 0;
     },
-    sendMessage() {
-      this.loading = true;
-      this.$axios
-        .post("/messages", {
-          name: this.name,
-          email: this.email,
-          phone: this.phone,
-          message: this.message,
-        })
-        .then((response) => {
-          this.success = true;
-          this.errored = false;
-        })
-        .catch((error) => {
-          this.errored = true;
-        })
-        .finally(() => {
-          this.loading = false;
+    async Submit() {
+      if (!this.formData.member) {
+        this.$message.error("請選擇填表志工");
+        return;
+      }
+
+      try {
+        const shiftMap = {
+          morning: "早班",
+          night: "晚班",
+        };
+        const { date, shift, member } = this.formData;
+        const { isConfirmed, dismiss } = await this.$swal.fire({
+          // title: "",
+          html: `<b><h3>您即將送出資料</h3></b>${this.$dayjs(date).format(
+            "YYYY-MM-DD"
+          )}<br/>${shiftMap[shift]}<br/>${member}`,
+          showClass: {
+            popup: "animate__animated animate__fadeIn animate__faster",
+          },
+          hideClass: {
+            popup: "",
+          },
+          showCancelButton: true,
+          cancelButtonText: "取消",
+          confirmButtonColor: "#b33a39",
+          confirmButtonText: "是的",
         });
+        if (isConfirmed) {
+          await this.SubmitForm();
+        }
+      } catch (error) {}
+    },
+    async SubmitForm() {
+      this.loadingSubmit = true;
+      await this.UpdateRegular();
+      this.loadingSubmit = false;
+    },
+    async InitDateAndShift() {
+      const {
+        query: { date, shift },
+      } = this.$route;
+
+      this.formData.date = date ? new Date(date) : new Date();
+      this.formData.shift = shift
+        ? shift == "morning"
+          ? "morning"
+          : "night"
+        : new Date().getHours() < 15
+        ? "morning"
+        : "night";
+
+      // 有效日期限制
+      let dateRelease = new Date(process.env.releaseDate);
+      dateRelease.setDate(dateRelease.getDate() - 1);
+      if (
+        this.formData.date > Date.now() ||
+        this.formData.date <= dateRelease
+      ) {
+        this.$router.push({
+          name: "regular",
+        });
+      }
+    },
+    async InitMemberList() {
+      const { data: volunteers } = await this.$axios.$get("/volunteer/list");
+      this.memberList = volunteers.map((volunteer) => {
+        return {
+          label: volunteer.name,
+          value: volunteer.name,
+        };
+      });
+    },
+
+    async InitRegular() {
+      try {
+        const { date, shift } = this.formData;
+        const { data: regular } = await this.$axios.$get("/regular", {
+          params: {
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            shift,
+          },
+        });
+
+        const {
+          recordId,
+          cats,
+          date: strDate,
+          shift: strShift,
+          member,
+          note,
+          remark,
+        } = regular;
+
+        this.formData.recordId = recordId;
+        this.formData.date = new Date(strDate);
+        this.formData.shift = strShift;
+        this.formData.cats = cats;
+        this.formData.note = note;
+        this.formData.remark = remark;
+        this.formData.member = member;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+
+    async InitPrevRegular() {
+      try {
+        const { date, shift } = this.prevDateShift;
+        const { data: regular } = await this.$axios.$get("/regular", {
+          params: {
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            shift,
+          },
+        });
+        this.formData.remark = regular.note;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+
+    async UpdateRegular() {
+      try {
+        const { recordId, date, shift, cats, note, member } = this.formData;
+        await this.$axios.$post("/regular/update", {
+          recordId,
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          shift,
+          cats,
+          note,
+          member,
+        });
+      } catch (e) {
+        console.error(e);
+      }
     },
   },
 };
