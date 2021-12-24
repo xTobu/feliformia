@@ -1,4 +1,8 @@
-import { client as lineClient, groupId as lineGroupId } from "../lib/line";
+import {
+  client as lineClient,
+  groupIdMain as lineGroupIdMain,
+  groupIdPartner as lineGroupIdPartner,
+} from "../lib/line";
 
 // Send line push message
 export const Push = async (body) => {
@@ -10,7 +14,11 @@ export const Push = async (body) => {
         text,
       },
     ];
-    await lineClient.pushMessage(lineGroupId, messages);
+    if (process.env.DEPLOY_SITE == "feliformia") {
+      await lineClient.pushMessage(lineGroupIdMain, messages);
+    }
+    await lineClient.pushMessage(lineGroupIdPartner, messages);
+
     return;
   } catch (error) {
     throw error;
