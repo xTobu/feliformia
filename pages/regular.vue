@@ -238,10 +238,8 @@ export default {
     },
     isDisabled() {
       const { date } = this.formData;
-      const day = this.$dayjs(date).get("date");
-      const disabled = this.$dayjs()
-        .subtract(process.env.disabledDays, "day")
-        .get("date");
+      const day = this.$dayjs(date);
+      const disabled = this.$dayjs().subtract(process.env.disabledDays, "day");
       return day < disabled;
     },
   },
