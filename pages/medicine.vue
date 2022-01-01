@@ -1,4 +1,4 @@
-<template  >
+<template>
   <div v-loading="loading" class="wrapper" id="medicine">
     <h1>餵藥及特殊飲食紀錄表</h1>
     <form v-on:submit.prevent="Submit">
@@ -180,10 +180,8 @@ export default {
     },
     isDisabled() {
       const { date } = this.formData;
-      const day = this.$dayjs(date).get("date");
-      const disabled = this.$dayjs()
-        .subtract(process.env.disabledDays, "day")
-        .get("date");
+      const day = this.$dayjs(date);
+      const disabled = this.$dayjs().subtract(process.env.disabledDays, "day");
       return day < disabled;
     },
   },
