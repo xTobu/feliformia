@@ -30,6 +30,11 @@
           </el-select>
         </div>
       </div>
+      <div class="W100 shift">
+        <el-checkbox v-model="noMorningShift">
+          &nbsp;&nbsp;今日無早班</el-checkbox
+        >
+      </div>
       <div class="W100">
         <div
           class="d_flex record_item"
@@ -53,8 +58,17 @@
                   :marks="marks"
                   :show-tooltip="false"
                   :disabled="isDisabled || !cat.feed"
+                  v-if="!noMorningShift"
                 >
                 </el-slider>
+                <div class="remain_key_in" v-if="noMorningShift">
+                  剩<el-input
+                    type="number"
+                    v-model="cat.feed_detail"
+                    :disabled="isDisabled || !cat.feed"
+                  ></el-input
+                  >匙
+                </div>
               </div>
             </div>
             <div class="can food d_flex">
@@ -160,6 +174,7 @@ export default {
     return {
       loading: true,
       loadingSubmit: false,
+      noMorningShift: false,
       pickerOptions: {
         disabledDate(time) {
           // 不可選未來的日期
@@ -180,9 +195,9 @@ export default {
       ],
       marks: {
         0: "沒吃",
-        25: "吃1/3",
-        50: "吃1/2",
-        75: "吃2/3",
+        25: "剩3匙",
+        50: "剩2匙",
+        75: "剩1匙",
         100: "吃光",
       },
       memberList: [
@@ -282,6 +297,10 @@ export default {
         return;
       }
       this.formData.cats[index].feed_detail = 0;
+    },
+
+    shiftHandler() {
+      this.noMorningShift = !this.noMorningShift;
     },
     async Submit() {
       if (!this.formData.member) {
@@ -440,7 +459,8 @@ export default {
 
   .detail {
     .food {
-      .el-slider {
+      .el-slider,
+      .remain_key_in {
         width: calc(100% - 60px);
         transform: translate(0, -6px);
       }
@@ -475,6 +495,21 @@ export default {
           width: 45px;
         }
       }
+    }
+  }
+
+  .shift {
+    margin-bottom: 15px;
+    .el-checkbox {
+      width: 100%;
+      flex-direction: row;
+      align-items: end;
+      display: flex;
+      justify-content: flex-end;
+    }
+    span {
+      padding-left: 10px !important;
+      padding-top: 0 !important;
     }
   }
 }
