@@ -1,6 +1,6 @@
 <template>
   <div>
-    <nuxt />
+    <nuxt :key="$route.fullPath" />
     <Footer />
   </div>
 </template>
@@ -173,8 +173,8 @@ select {
   border: none;
   border-radius: 4px;
   border: 1px solid #ccc;
-  height: 50px;
-  line-height: 50px;
+  // height: 50px;
+  // line-height: 50px;
   padding: 0 10px;
   width: 100%;
   color: #606266;

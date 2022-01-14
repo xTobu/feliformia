@@ -5,20 +5,30 @@ export default {
   /*
    ** Headers of the page
    */
-  // router: {
-  //   base: '/GVM_dist/'
-  // },
-  env: {
-    // baseUrl: process.env.BASE_URL || "",
-  },
   head: {
-    title: "Feliformia",
+    titleTemplate: "%s | Feliformia",
     meta: [
       { charset: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "description", hid: "description", content: "吾等貓毛輪值表" },
-      { property: "og:description", content: "吾等貓毛輪值表" },
-      { property: "og:type", content: "website" },
+      { name: "description", hid: "description", content: "志工輪值表" },
+      {
+        hid: "og:title",
+        property: "og:title",
+        content: "吾等與貓毛 Feliformia",
+      },
+      { property: "og:description", content: "志工輪值表" },
+      { property: "og:site_name", content: "吾等與貓毛 Feliformia" },
+      { hid: "og:type", property: "og:type", content: "website" },
+      {
+        hid: "og:url",
+        property: "og:url",
+        content: "https://catswith.vercel.app/",
+      },
+      {
+        hid: "og:image",
+        property: "og:image",
+        content: "/share.jpeg",
+      },
     ],
     link: [
       { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
@@ -48,13 +58,16 @@ export default {
   /*
    ** Global CSS
    */
-  css: ["element-ui/lib/theme-chalk/index.css"],
+  css: ["element-ui/lib/theme-chalk/index.css", "animate.css/animate.min.css"],
   /*
    ** Plugins to load before mounting the App
    */
   plugins: [
     "~/plugins/element-ui/element-ui",
-
+    {
+      src: "~/plugins/axios",
+      ssr: true,
+    },
     // { src: '~/static/js/media.js',
     //   mode: 'client',
     //   defer: true
@@ -68,11 +81,40 @@ export default {
   /*
    ** Nuxt.js modules
    */
-  modules: [],
+  modules: ["@nuxtjs/axios", "@nuxtjs/dayjs", "vue-sweetalert2/nuxt"],
+
+  /**
+   * @nuxtjs/axios 設定預設
+   */
+  axios: {
+    baseUrl: process.env.BASE_URL || "/api",
+  },
+
+  /**
+   * @nuxtjs/dayjs 設定預設
+   */
+  dayjs: {
+    locales: ["zh-tw", "en"],
+    defaultLocale: "en",
+    defaultTimeZone: "Asia/Taipei",
+    plugins: [
+      "utc", // import 'dayjs/plugin/utc'
+      "timezone", // import 'dayjs/plugin/timezone'
+    ],
+  },
+
+  // env using in Nuxt
+  env: {
+    releaseDate: process.env.RELEASE_DATE,
+    disabledDays: process.env.DISABLED_DAYS,
+    deploySite: process.env.DEPLOY_SITE,
+  },
+
   /*
    ** Build configuration
    */
   build: {
+    vendor: ["axios", "qs"],
     /*
      ** You can extend webpack config here
      */

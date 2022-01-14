@@ -1,24 +1,20 @@
 import express from "express";
-import bodyParser from "body-parser";
-import { getCats } from "./airtable";
+import cat from "./source/cat.route";
+import volunteer from "./source/volunteer.route";
+import regular from "./source/regular.route";
+import medicine from "./source/medicine.route";
+import line from "./source/line.route";
 
 const app = express();
-app.use(bodyParser.json());
 
-app.get("/hello", async (req, res, next) => {
-  try {
-    const cats = await getCats();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-    const { body } = req;
-    res.status(200).json({
-      body,
-      cats,
-      AIRTABLE_API_KEY: process.env.AIRTABLE_API_KEY,
-    });
-  } catch (error) {
-    // Passes errors into the error handler
-     return next(error);
-  }
-});
+// routers
+app.use("/cat", cat);
+app.use("/volunteer", volunteer);
+app.use("/regular", regular);
+app.use("/medicine", medicine);
+app.use("/line", line);
 
 export default app;
