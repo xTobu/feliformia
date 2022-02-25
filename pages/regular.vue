@@ -41,7 +41,9 @@
           v-for="(cat, index) in formData.cats"
           :key="`${cat.name}${index}`"
         >
-          <div class="name">{{ cat.name }}</div>
+          <a class="name" :href="'weekly?cat=' + cat.cat.recordId">{{
+            cat.name
+          }}</a>
           <div class="detail">
             <div class="feed food d_flex">
               <p class="f_blue">食物</p>
@@ -61,14 +63,32 @@
                   v-if="!noMorningShift"
                 >
                 </el-slider>
-                <div class="remain_key_in" v-if="noMorningShift">
-                  剩<el-input
-                    type="number"
+                <el-slider
+                  v-model="cat.feed_detail_noMorningShift"
+                  :step="10"
+                  :marks="marksNoMorningShift"
+                  :show-tooltip="true"
+                  :format-tooltip="formatTooltip"
+                  :disabled="isDisabled || !cat.feed"
+                  v-if="noMorningShift"
+                >
+                </el-slider>
+                <!-- <div class="remain_key_in" v-if="noMorningShift">
+                 <el-select
+                    value-key="id"
                     v-model="cat.feed_detail"
+                    placeholder="請選擇剩餘乾乾"
                     :disabled="isDisabled || !cat.feed"
-                  ></el-input
-                  >匙
-                </div>
+                    class="remain_select"
+                  >
+                    <el-option
+                      v-for="(item, idx) in feedRemainList"
+                      :key="idx"
+                      :label="item.value"
+                      :value="item.label"
+                    ></el-option>
+                  </el-select>
+                </div>-->
               </div>
             </div>
             <div class="can food d_flex">
@@ -158,6 +178,8 @@
         </button>
         <NuxtLink class="f_red" :to="prevLink">看前班紀錄</NuxtLink>
         <NuxtLink class="f_red" to="/regular">回到今天</NuxtLink>
+        <NuxtLink class="f_red" to="/">回首頁</NuxtLink>
+
         <NuxtLink class="f_red" to="/medicine">前往餵藥及特殊飲食須知</NuxtLink>
       </div>
     </form>
@@ -193,6 +215,11 @@ export default {
           label: "晚班",
         },
       ],
+      marksNoMorningShift: {
+        0: "沒吃",
+        50: "剩5匙",
+        100: "吃光",
+      },
       marks: {
         0: "沒吃",
         25: "剩3匙",
@@ -273,7 +300,9 @@ export default {
 
   async mounted() {},
 
-  updated() {},
+  updated() {
+    console.log(this.formData.cats[0]);
+  },
 
   methods: {
     dateHandler() {
@@ -301,6 +330,14 @@ export default {
 
     shiftHandler() {
       this.noMorningShift = !this.noMorningShift;
+    },
+    formatTooltip(val) {
+      if (val === 0) {
+        return "沒吃";
+      } else if (val == 100) {
+        return "吃光";
+      }
+      return `剩${10 - val / 10}匙`;
     },
     async Submit() {
       if (!this.formData.member) {
@@ -467,6 +504,12 @@ export default {
 
       .el-checkbox {
         width: 40px;
+      }
+
+      .remain_select {
+        // margin-left: 10px;
+        // margin-right: 10px;
+        width: 100%;
       }
     }
   }
