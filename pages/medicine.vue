@@ -203,7 +203,7 @@ export default {
       return (
         date &&
         date.getDate() == new Date().getDate() &&
-        new Date().getHours() < 19 &&
+        new Date().getHours() < 18 &&
         fromShift == "night"
       );
     },
@@ -212,7 +212,7 @@ export default {
       date = date || new Date(date);
       if (
         date.getDate() == new Date().getDate() &&
-        new Date().getHours() < 19 &&
+        new Date().getHours() < 18 &&
         shift == "night"
       ) {
         this.$message.error("錯誤，請重新選擇日期");
@@ -279,7 +279,7 @@ export default {
         ? shift == "morning"
           ? "morning"
           : "night"
-        : new Date().getHours() < 15
+        : new Date().getHours() < 18
         ? "morning"
         : "night";
 
