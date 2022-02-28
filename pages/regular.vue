@@ -331,7 +331,7 @@ export default {
         ? shift == "morning"
           ? "morning"
           : "night"
-        : new Date().getHours() < 15
+        : new Date().getHours() < 18
         ? "morning"
         : "night";
 
