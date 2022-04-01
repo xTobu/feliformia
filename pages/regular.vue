@@ -30,13 +30,20 @@
           </el-select>
         </div>
       </div>
+      <div class="W100 shift">
+        <el-checkbox v-model="noMorningShift">
+          &nbsp;&nbsp;今日無早班</el-checkbox
+        >
+      </div>
       <div class="W100">
         <div
           class="d_flex record_item"
           v-for="(cat, index) in formData.cats"
           :key="`${cat.name}${index}`"
         >
-          <div class="name">{{ cat.name }}</div>
+          <a class="name" :href="'weekly?cat=' + cat.cat.recordId">{{
+            cat.name
+          }}</a>
           <div class="detail">
             <div class="feed food d_flex">
               <p class="f_blue">食物</p>
@@ -53,8 +60,35 @@
                   :marks="marks"
                   :show-tooltip="false"
                   :disabled="isDisabled || !cat.feed"
+                  v-if="!noMorningShift"
                 >
                 </el-slider>
+                <el-slider
+                  v-model="cat.feed_detail_noMorningShift"
+                  :step="10"
+                  :marks="marksNoMorningShift"
+                  :show-tooltip="true"
+                  :format-tooltip="formatTooltip"
+                  :disabled="isDisabled || !cat.feed"
+                  v-if="noMorningShift"
+                >
+                </el-slider>
+                <!-- <div class="remain_key_in" v-if="noMorningShift">
+                 <el-select
+                    value-key="id"
+                    v-model="cat.feed_detail"
+                    placeholder="請選擇剩餘乾乾"
+                    :disabled="isDisabled || !cat.feed"
+                    class="remain_select"
+                  >
+                    <el-option
+                      v-for="(item, idx) in feedRemainList"
+                      :key="idx"
+                      :label="item.value"
+                      :value="item.label"
+                    ></el-option>
+                  </el-select>
+                </div>-->
               </div>
             </div>
             <div class="can food d_flex">
@@ -144,6 +178,8 @@
         </button>
         <NuxtLink class="f_red" :to="prevLink">看前班紀錄</NuxtLink>
         <NuxtLink class="f_red" to="/regular">回到今天</NuxtLink>
+        <NuxtLink class="f_red" to="/">回首頁</NuxtLink>
+
         <NuxtLink class="f_red" to="/medicine">前往餵藥及特殊飲食須知</NuxtLink>
       </div>
     </form>
@@ -160,6 +196,7 @@ export default {
     return {
       loading: true,
       loadingSubmit: false,
+      noMorningShift: false,
       pickerOptions: {
         disabledDate(time) {
           // 不可選未來的日期
@@ -178,11 +215,16 @@ export default {
           label: "晚班",
         },
       ],
+      marksNoMorningShift: {
+        0: "沒吃",
+        50: "剩5匙",
+        100: "吃光",
+      },
       marks: {
         0: "沒吃",
-        25: "吃1/3",
-        50: "吃1/2",
-        75: "吃2/3",
+        25: "剩3匙",
+        50: "剩2匙",
+        75: "剩1匙",
         100: "吃光",
       },
       memberList: [
@@ -258,7 +300,9 @@ export default {
 
   async mounted() {},
 
-  updated() {},
+  updated() {
+    console.log(this.formData.cats[0]);
+  },
 
   methods: {
     dateHandler() {
@@ -282,6 +326,18 @@ export default {
         return;
       }
       this.formData.cats[index].feed_detail = 0;
+    },
+
+    shiftHandler() {
+      this.noMorningShift = !this.noMorningShift;
+    },
+    formatTooltip(val) {
+      if (val === 0) {
+        return "沒吃";
+      } else if (val == 100) {
+        return "吃光";
+      }
+      return `剩${10 - val / 10}匙`;
     },
     async Submit() {
       if (!this.formData.member) {
@@ -440,13 +496,20 @@ export default {
 
   .detail {
     .food {
-      .el-slider {
+      .el-slider,
+      .remain_key_in {
         width: calc(100% - 60px);
         transform: translate(0, -6px);
       }
 
       .el-checkbox {
         width: 40px;
+      }
+
+      .remain_select {
+        // margin-left: 10px;
+        // margin-right: 10px;
+        width: 100%;
       }
     }
   }
@@ -475,6 +538,21 @@ export default {
           width: 45px;
         }
       }
+    }
+  }
+
+  .shift {
+    margin-bottom: 15px;
+    .el-checkbox {
+      width: 100%;
+      flex-direction: row;
+      align-items: end;
+      display: flex;
+      justify-content: flex-end;
+    }
+    span {
+      padding-left: 10px !important;
+      padding-top: 0 !important;
     }
   }
 }
