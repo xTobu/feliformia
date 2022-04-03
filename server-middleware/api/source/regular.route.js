@@ -1,5 +1,5 @@
 import express from "express";
-import { Create, Get, Update } from "./regular.repo";
+import { Create, Get, Between, Update } from "./regular.repo";
 import { MakeSuccess, MakeFail } from "../helper/response";
 
 /*
@@ -35,12 +35,31 @@ const UpdateRegular = async (req, res, next) => {
   }
 };
 
+const FindBetweenRegular = async (req, res, next) => {
+  const { dateStart, dateEnd } = req.body;
+
+  try {
+    const regulars = await Between({ dateStart, dateEnd });
+    if (regulars.length >= 1) {
+      return MakeSuccess(res, regulars);
+    }
+
+    if (regulars.length == 0) {
+      return MakeFail(res, 400, 2, "empty");
+    }
+  } catch (error) {
+    const { message } = error;
+    return MakeFail(res, 400, 1, message);
+  }
+};
+
 /*
  ** Router
  */
 const router = express.Router();
 
 router.get("/", FindRegular);
+router.post("/between", FindBetweenRegular);
 router.post("/update", UpdateRegular);
 
 export default router;
