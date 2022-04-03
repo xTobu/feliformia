@@ -31,7 +31,7 @@
         </div>
       </div>
       <div class="W100 shift">
-        <el-checkbox v-model="noMorningShift">
+        <el-checkbox v-model="noMorningShift" v-if="false">
           &nbsp;&nbsp;今日無早班</el-checkbox
         >
       </div>
@@ -222,9 +222,9 @@ export default {
       },
       marks: {
         0: "沒吃",
-        25: "剩3匙",
-        50: "剩2匙",
-        75: "剩1匙",
+        25: "吃1/3",
+        50: "吃1/2",
+        75: "吃2/3",
         100: "吃光",
       },
       memberList: [
@@ -546,7 +546,7 @@ export default {
     .el-checkbox {
       width: 100%;
       flex-direction: row;
-      align-items: end;
+      align-items: flex-end;
       display: flex;
       justify-content: flex-end;
     }
