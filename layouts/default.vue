@@ -239,7 +239,7 @@ a {
   justify-content: space-between;
   .W50 {
     width: calc(50% - 10px) !important;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
   }
   &.j_start {
     justify-content: start;
