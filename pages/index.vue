@@ -3,10 +3,13 @@
     <h1 class="f_grey">貓毛輪值線上表單</h1>
     <NuxtLink class="btn" to="/regular">飲食及如廁紀錄</NuxtLink>
     <NuxtLink class="btn" to="/medicine">餵藥及特殊飲食紀錄</NuxtLink>
+    <a href="/weekly" target="_blank" style="color: #b33a39; margin-top: 40px"
+      >卯咪健康週表</a
+    >
     <a
       href="https://docs.google.com/spreadsheets/d/1VcvoYrlp9nwFBrtnJSG4XV8035rh0w-Rxk_x1aKbDwA/edit#gid=0"
       target="_blank"
-      style="color: #b33a39; margin-top: 40px"
+      style="color: #b33a39"
       >貓咪簡介 / 飲食 / 習慣需知</a
     >
   </div>

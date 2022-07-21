@@ -1,5 +1,5 @@
 <template>
-  <div v-loading="loading" class="wrapper" id="regular">
+  <div class="wrapper" id="regular">
     <h1>卯咪健康週表</h1>
     <form v-on:submit.prevent="Submit">
       <div class="d_flex">
@@ -93,7 +93,6 @@ export default {
   },
   data() {
     return {
-      loading: true,
       selectedCat: "",
       optionsCats: [],
       tableData: [
@@ -209,7 +208,6 @@ export default {
   async mounted() {
     await this.InitWeekly();
     await this.InitCatList();
-    this.loading = false;
   },
 
   methods: {
