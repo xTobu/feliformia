@@ -41,9 +41,12 @@
           v-for="(cat, index) in formData.cats"
           :key="`${cat.name}${index}`"
         >
-          <a class="name" :href="'weekly?cat=' + cat.cat.recordId">{{
-            cat.name
-          }}</a>
+          <a
+            class="name"
+            target="_blank"
+            :href="'weekly?cat=' + cat.cat.recordId"
+            >{{ cat.name }}</a
+          >
           <div class="detail">
             <div class="feed food d_flex">
               <p class="f_blue">食物</p>
@@ -179,7 +182,6 @@
         <NuxtLink class="f_red" :to="prevLink">看前班紀錄</NuxtLink>
         <NuxtLink class="f_red" to="/regular">回到今天</NuxtLink>
         <NuxtLink class="f_red" to="/">回首頁</NuxtLink>
-
         <NuxtLink class="f_red" to="/medicine">前往餵藥及特殊飲食須知</NuxtLink>
       </div>
     </form>
@@ -376,6 +378,18 @@ export default {
       this.loadingSubmit = true;
       await this.UpdateRegular();
       this.loadingSubmit = false;
+      this.$swal.fire({
+        text: "表單已成功送出",
+        showClass: {
+          popup: "animate__animated animate__fadeIn animate__faster",
+        },
+        hideClass: {
+          popup: "",
+        },
+        showCancelButton: false,
+        confirmButtonColor: "#b33a39",
+        confirmButtonText: "是的",
+      });
     },
     async InitDateAndShift() {
       const {

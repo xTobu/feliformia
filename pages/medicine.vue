@@ -268,6 +268,18 @@ export default {
       this.loadingSubmit = true;
       await this.UpdateMedicine();
       this.loadingSubmit = false;
+      this.$swal.fire({
+        text: "表單已成功送出",
+        showClass: {
+          popup: "animate__animated animate__fadeIn animate__faster",
+        },
+        hideClass: {
+          popup: "",
+        },
+        showCancelButton: false,
+        confirmButtonColor: "#b33a39",
+        confirmButtonText: "是的",
+      });
     },
     async InitDateAndShift() {
       const {
