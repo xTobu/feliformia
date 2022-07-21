@@ -230,12 +230,16 @@ export default {
 
     async InitCatList() {
       const { dataWeekly } = this;
+      const queryCat = this.$route.query.cat;
 
       const objCats = dataWeekly.reduce(
         (accumulator, currentValue, currentIndex, array) => {
           let cats = {};
           currentValue.cats.forEach((dataCat) => {
             cats[dataCat.name] = true;
+            if (queryCat && queryCat === dataCat.cat.recordId) {
+              this.selectedCat = dataCat.name;
+            }
           });
           return { ...accumulator, ...cats };
         },
