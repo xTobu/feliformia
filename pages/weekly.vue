@@ -33,7 +33,7 @@
     >
       <el-table-column align="center" fixed label="班別" min-width="25%">
         <template slot-scope="scope">
-          {{ $dayjs(scope.row.date).format("MM-DD") }} {{ scope.row.shift }}
+          {{ scope.row.date }} {{ scope.row.shift }}
         </template>
       </el-table-column>
       <el-table-column align="center" prop="name" label="乾" min-width="18.75%">
@@ -153,7 +153,7 @@ export default {
           };
 
           // 班別 - 日期
-          const newDate = this.$dayjs(date).format("MM-DD");
+          const newDate = this.$dayjs(date).format("MM/DD");
 
           // 班別 - 早晚班
           const newShift = shiftMap[shift];
