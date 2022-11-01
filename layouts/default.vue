@@ -327,8 +327,13 @@ a {
   padding: 20px 0;
 }
 
+.el-select-dropdown {
+  max-width: 70%;
+}
+
 .el-select-dropdown__item {
   text-align: left;
+  overflow-x: visible !important;
 }
 
 @media screen and (max-width: 600px) {
