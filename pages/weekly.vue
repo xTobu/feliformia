@@ -247,6 +247,7 @@ export default {
       const arrCats = Object.keys(objCats).map((key) => {
         return key;
       });
+      arrCats.sort();
 
       this.optionsCats = [...arrCats];
     },
@@ -258,7 +259,7 @@ export default {
 };
 </script>
 
-<style lang="scss" >
+<style lang="scss">
 .el-table {
   &.weekly-table {
     margin: 0 0 48px 0;

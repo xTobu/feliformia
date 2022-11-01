@@ -327,6 +327,10 @@ a {
   padding: 20px 0;
 }
 
+.el-select-dropdown__item {
+  text-align: left;
+}
+
 @media screen and (max-width: 600px) {
   .mb {
     display: inline-block;
