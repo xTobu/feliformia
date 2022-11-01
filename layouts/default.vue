@@ -333,7 +333,6 @@ a {
 
 .el-select-dropdown__item {
   text-align: left;
-  overflow-x: visible !important;
 }
 
 @media screen and (max-width: 600px) {
