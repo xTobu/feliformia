@@ -10,10 +10,10 @@
             placeholder="請選擇卯咪"
           >
             <el-option
-              v-for="(cat, key) in optionsCats"
-              :label="cat"
-              :value="cat"
-              :key="key"
+              v-for="cat in optionsCats"
+              :label="cat.name"
+              :value="cat.id"
+              :key="cat.id"
             >
             </el-option>
           </el-select>
@@ -123,7 +123,7 @@ export default {
       const arrCatWeek = dataWeekly.reduce(
         (accumulator, { id, date, shift, cats }, currentIndex, array) => {
           const cat = cats.find(function (item, index, array) {
-            return item.cat.name == selectedCat;
+            return item.cat.recordId == selectedCat;
           });
           if (!cat) {
             return accumulator;
@@ -234,7 +234,7 @@ export default {
         (accumulator, currentValue, currentIndex, array) => {
           let cats = {};
           currentValue.cats.forEach((dataCat) => {
-            cats[dataCat.name] = true;
+            cats[dataCat.cat.recordId] = dataCat.cat.name;
             if (queryCat && queryCat === dataCat.cat.recordId) {
               this.selectedCat = dataCat.name;
             }
@@ -245,9 +245,8 @@ export default {
       );
 
       const arrCats = Object.keys(objCats).map((key) => {
-        return key;
+        return { id: key, name: objCats[key] };
       });
-      arrCats.sort();
 
       this.optionsCats = [...arrCats];
     },
