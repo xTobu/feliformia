@@ -236,7 +236,7 @@ export default {
           currentValue.cats.forEach((dataCat) => {
             cats[dataCat.cat.recordId] = dataCat.cat.name;
             if (queryCat && queryCat === dataCat.cat.recordId) {
-              this.selectedCat = dataCat.name;
+              this.selectedCat = dataCat.cat.recordId;
             }
           });
           return { ...accumulator, ...cats };
