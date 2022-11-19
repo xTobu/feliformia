@@ -308,9 +308,7 @@ export default {
 
   async mounted() {},
 
-  updated() {
-    console.log(this.formData.cats[0]);
-  },
+  updated() {},
 
   methods: {
     dateHandler() {
