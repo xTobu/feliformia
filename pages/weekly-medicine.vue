@@ -22,7 +22,10 @@
     </form>
     <el-empty v-if="!selectedCat" description="請選擇卯咪"></el-empty>
     <template v-for="data in computedTableData">
-      <div class="date-label">{{ data.date }} - {{ data.shift }}</div>
+      <div class="label-tag">{{ data.date }} - {{ data.shift }}</div>
+      <div class="label-tag name" :class="{ empty: !data.member }">
+        {{ data.member || "無填寫" }}
+      </div>
       <el-table
         class="weekly-table"
         :data="data.treatment"
@@ -147,7 +150,12 @@ export default {
       }
 
       const arrCatWeek = dataWeekly.reduce(
-        (accumulator, { id, date, shift, cats }, currentIndex, array) => {
+        (
+          accumulator,
+          { id, date, shift, cats, member },
+          currentIndex,
+          array
+        ) => {
           const cat = cats.filter(function (item, index, array) {
             return item.name == selectedCat;
           });
@@ -170,6 +178,7 @@ export default {
                 ...accumulator,
                 {
                   id,
+                  member,
                   date: newDate,
                   shift: newShift,
                   treatment: cat,
@@ -272,14 +281,21 @@ export default {
   a {
     display: block;
   }
-  div.date-label {
+  div.label-tag {
     float: left;
     padding: 4px 6px;
     font-size: 14px;
-
     color: #fff;
     border-radius: 4px;
     background-color: #b28c6e;
+
+    &.name {
+      margin-left: 1px;
+    }
+
+    &.empty {
+      background-color: #bb5548;
+    }
   }
 }
 </style>
