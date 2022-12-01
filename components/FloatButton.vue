@@ -4,7 +4,12 @@
       <img v-if="!drawer" src="~/assets/img/ic-menu.svg" alt="" />
       <img v-else src="~/assets/img/ic-close.svg" alt="" />
     </button>
-    <el-drawer :visible.sync="drawer" :with-header="false" direction="btt">
+    <el-drawer
+      :visible.sync="drawer"
+      size="40%"
+      :with-header="false"
+      direction="btt"
+    >
       <div class="drawer__content">
         <ul>
           <li class="red" @click="toggleDialogNotice()"># 注意事項</li>
@@ -105,6 +110,7 @@ export default {
   padding: 0;
   border: 0;
   z-index: 2099;
+  transition: bottom 0.4s;
 
   > img {
     width: 100%;
@@ -114,7 +120,7 @@ export default {
   width: 100%;
   max-width: 450px;
   margin: 0 auto;
-  padding: 16px 32px;
+  padding: 0px 32px;
   ul {
     list-style: none;
     margin: 0;

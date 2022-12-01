@@ -341,6 +341,9 @@ a {
   line-height: 1.5;
   padding: 20px 0;
 }
+.el-drawer__body {
+  border-top: solid 24px white;
+}
 .el-dialog__header {
   span {
     font-weight: 500;
