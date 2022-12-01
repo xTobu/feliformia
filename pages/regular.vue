@@ -1,5 +1,5 @@
 <template>
-  <div v-loading="loading" class="wrapper" id="regular">
+  <div v-loading="loading" id="regular">
     <h1>飲食及如廁紀錄表</h1>
     <form v-on:submit.prevent="Submit">
       <div class="d_flex">

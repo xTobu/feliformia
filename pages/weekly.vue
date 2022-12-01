@@ -1,5 +1,5 @@
 <template>
-  <div class="wrapper" id="regular">
+  <div id="regular">
     <h1>卯咪健康週表</h1>
     <form v-on:submit.prevent="Submit">
       <div class="d_flex">
