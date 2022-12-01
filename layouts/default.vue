@@ -295,6 +295,15 @@ a {
     line-height: 20px;
     height: 23px;
   }
+
+  .warning {
+    position: absolute;
+    height: 20px;
+    left: -10px;
+    top: -10px;
+    z-index: 1;
+  }
+
   .detail {
     // border-left: 1px solid rgba(50, 50, 50, 0.05);
     width: 100%;

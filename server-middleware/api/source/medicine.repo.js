@@ -38,6 +38,28 @@ export const Get = async (body) => {
   });
 };
 
+export const Between = async (body) => {
+  const { dateStart, dateEnd } = body;
+  const selector = table.medicine.main.select({
+    view: "Grid view",
+    maxRecords: 100,
+    sort: [
+      { field: "date", direction: "asc" },
+      { field: "shift", direction: "asc" },
+    ],
+    filterByFormula: `AND(IS_AFTER(date,DATEADD('${dateStart}', -1, "days")),IS_BEFORE(date,DATEADD('${dateEnd}', 1, "days")))`,
+  });
+
+  const records = await selector.firstPage();
+  return records.map((record) => {
+    return {
+      ...record.fields,
+      recordId: record.id,
+      cats: JSON.parse(record.fields.cats),
+    };
+  });
+};
+
 // 建立一筆初始化用的記錄
 export const Create = async (body) => {
   let list = [];

@@ -1,6 +1,6 @@
 <template>
-  <div class="wrapper" id="regular">
-    <h1>卯咪健康週表</h1>
+  <div class="wrapper" id="medicine">
+    <h1>卯咪餵藥週表</h1>
     <form v-on:submit.prevent="Submit">
       <div class="d_flex">
         <div class="W100 arrow">
@@ -10,18 +10,67 @@
             placeholder="請選擇卯咪"
           >
             <el-option
-              v-for="cat in optionsCats"
-              :label="cat.name"
-              :value="cat.id"
-              :key="cat.id"
+              v-for="(cat, key) in optionsCats"
+              :label="cat"
+              :value="cat"
+              :key="key"
             >
             </el-option>
           </el-select>
         </div>
       </div>
     </form>
+    <el-empty v-if="!selectedCat" description="請選擇卯咪"></el-empty>
+    <template v-for="data in computedTableData">
+      <div class="label-tag">{{ data.date }} - {{ data.shift }}</div>
+      <div class="label-tag name" :class="{ empty: !data.member }">
+        {{ data.member || "無填寫" }}
+      </div>
+      <el-table
+        class="weekly-table"
+        :data="data.treatment"
+        header-cell-class-name="weekly-head"
+        cell-class-name="weekly-cell"
+        border
+        style="width: 100%"
+        empty-text="尚未選擇卯咪"
+      >
+        <el-table-column
+          align="center"
+          prop="name"
+          label="事項"
+          min-width="80%"
+        >
+          <template slot-scope="scope">
+            <span>
+              {{ scope.row.treatment }}
+            </span>
+          </template>
+        </el-table-column>
 
-    <el-table
+        <el-table-column
+          align="center"
+          prop="name"
+          label="完成"
+          min-width="20%"
+        >
+          <template slot-scope="scope">
+            <i
+              v-if="scope.row.done"
+              style="color: #0071b0; font-size: 20px"
+              class="el-icon-check"
+            ></i>
+            <i
+              v-else
+              style="color: #740a00; font-size: 20px"
+              class="el-icon-close"
+            ></i>
+          </template>
+        </el-table-column>
+      </el-table>
+    </template>
+
+    <!-- <el-table
       class="weekly-table"
       :data="computedTableData"
       header-cell-class-name="weekly-head"
@@ -31,40 +80,20 @@
       style="width: 100%"
       empty-text="尚未選擇卯咪"
     >
-      <el-table-column align="center" fixed label="班別" min-width="25%">
+      <el-table-column align="center" fixed label="班別" min-width="20%">
         <template slot-scope="scope">
           {{ scope.row.date }} {{ scope.row.shift }}
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="name" label="乾" min-width="18.75%">
+      <el-table-column align="center" prop="name" label="事項" min-width="60%">
         <template slot-scope="scope">
           <span :class="{ warning: isWarningCell(scope.row.feed) }">
             {{ scope.row.feed }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="name" label="罐" min-width="18.75%">
-        <template slot-scope="scope">
-          <span :class="{ warning: isWarningCell(scope.row.can) }">
-            {{ scope.row.can }}
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column align="center" prop="name" label="尿" min-width="18.75%">
-        <template slot-scope="scope">
-          <i
-            v-if="scope.row.urine"
-            style="color: #0071b0; font-size: 20px"
-            class="el-icon-check"
-          ></i>
-          <i
-            v-else
-            style="color: #740a00; font-size: 20px"
-            class="el-icon-close"
-          ></i>
-        </template>
-      </el-table-column>
-      <el-table-column align="center" prop="name" label="屎" min-width="18.75%">
+
+      <el-table-column align="center" prop="name" label="完成" min-width="20%">
         <template slot-scope="scope">
           <i
             style="color: #0071b0; font-size: 20px"
@@ -81,7 +110,7 @@
           </span>
         </template>
       </el-table-column>
-    </el-table>
+    </el-table> -->
   </div>
 </template>
 
@@ -89,7 +118,7 @@
 export default {
   layout: "weekly",
   head: {
-    title: "卯咪健康週表",
+    title: "卯咪餵藥週表",
   },
   data() {
     return {
@@ -121,63 +150,27 @@ export default {
       }
 
       const arrCatWeek = dataWeekly.reduce(
-        (accumulator, { id, date, shift, cats }, currentIndex, array) => {
-          const cat = cats.find(function (item, index, array) {
-            return item.cat.recordId == selectedCat;
+        (
+          accumulator,
+          { id, date, shift, cats, member },
+          currentIndex,
+          array
+        ) => {
+          const cat = cats.filter(function (item, index, array) {
+            return item.name == selectedCat;
           });
           if (!cat) {
             return accumulator;
           }
-
-          const {
-            feed,
-            feed_detail,
-            can,
-            can_detail,
-            feces,
-            feces_warning,
-            urine,
-          } = cat;
-
-          // 映射表
-          const shiftMap = {
-            morning: "早",
-            night: "晚",
-          };
-          const markMap = {
-            0: "沒吃",
-            25: "吃1/3",
-            50: "吃1/2",
-            75: "吃2/3",
-            100: "吃光",
-          };
-
           // 班別 - 日期
           const newDate = this.$dayjs(date).format("MM/DD");
 
           // 班別 - 早晚班
+          const shiftMap = {
+            morning: "早",
+            night: "晚",
+          };
           const newShift = shiftMap[shift];
-
-          // 乾
-          let newFeed = "";
-          if (feed) {
-            newFeed = markMap[feed_detail];
-          }
-
-          // 罐
-          let newCan = "";
-          if (can) {
-            newCan = markMap[can_detail];
-          }
-
-          // 尿
-          let newUrine = urine;
-
-          // 便
-          let newFeces = false;
-          if (feces) {
-            newFeces = feces_warning;
-          }
 
           return !cat
             ? accumulator
@@ -185,18 +178,15 @@ export default {
                 ...accumulator,
                 {
                   id,
+                  member,
                   date: newDate,
                   shift: newShift,
-                  feed: newFeed,
-                  can: newCan,
-                  feces: newFeces,
-                  urine: newUrine,
+                  treatment: cat,
                 },
               ];
         },
         []
       );
-
       if (arrCatWeek.length > 0) return [...arrCatWeek];
     },
   },
@@ -214,7 +204,7 @@ export default {
     async InitWeekly() {
       try {
         const { data: dataWeekly } = await this.$axios.$post(
-          "/regular/between",
+          "/medicine/between",
           {
             dateStart: this.$dayjs().subtract(7, "day").format("MM/DD/YYYY"),
             dateEnd: this.$dayjs().format("MM/DD/YYYY"),
@@ -234,10 +224,11 @@ export default {
         (accumulator, currentValue, currentIndex, array) => {
           let cats = {};
           currentValue.cats.forEach((dataCat) => {
-            cats[dataCat.cat.recordId] = dataCat.cat.name;
-            if (queryCat && queryCat === dataCat.cat.recordId) {
-              this.selectedCat = dataCat.cat.recordId;
-            }
+            cats[dataCat.name] = true;
+            // TODO : Medicine 超連結
+            // if (queryCat && queryCat === dataCat.cat.recordId) {
+            //   this.selectedCat = dataCat.cat.recordId;
+            // }
           });
           return { ...accumulator, ...cats };
         },
@@ -245,7 +236,7 @@ export default {
       );
 
       const arrCats = Object.keys(objCats).map((key) => {
-        return { id: key, name: objCats[key] };
+        return key;
       });
 
       this.optionsCats = [...arrCats];
@@ -261,7 +252,7 @@ export default {
 <style lang="scss">
 .el-table {
   &.weekly-table {
-    margin: 0 0 48px 0;
+    margin: 0 0 32px 0;
   }
   .weekly-head {
     height: 36px;
@@ -286,9 +277,25 @@ export default {
   }
 }
 
-#regular {
+#medicine {
   a {
     display: block;
+  }
+  div.label-tag {
+    float: left;
+    padding: 4px 6px;
+    font-size: 14px;
+    color: #fff;
+    border-radius: 4px;
+    background-color: #b28c6e;
+
+    &.name {
+      margin-left: 1px;
+    }
+
+    &.empty {
+      background-color: #bb5548;
+    }
   }
 }
 </style>

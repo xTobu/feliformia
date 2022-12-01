@@ -1,5 +1,5 @@
 import express from "express";
-import { Create, Get, Update, ListNotice } from "./medicine.repo";
+import { Create, Get, Between, Update, ListNotice } from "./medicine.repo";
 import { MakeSuccess, MakeFail } from "../helper/response";
 
 /*
@@ -33,6 +33,24 @@ const FindMedicine = async (req, res, next) => {
   }
 };
 
+const FindBetweenMedicine = async (req, res, next) => {
+  const { dateStart, dateEnd } = req.body;
+
+  try {
+    const medicines = await Between({ dateStart, dateEnd });
+    if (medicines.length >= 1) {
+      return MakeSuccess(res, medicines);
+    }
+
+    if (medicines.length == 0) {
+      return MakeFail(res, 400, 2, "empty");
+    }
+  } catch (error) {
+    const { message } = error;
+    return MakeFail(res, 400, 1, message);
+  }
+};
+
 const UpdateMedicine = async (req, res, next) => {
   const { recordId, date, shift, cats, note, member } = req.body;
 
@@ -51,6 +69,7 @@ const UpdateMedicine = async (req, res, next) => {
 const router = express.Router();
 
 router.get("/", FindMedicine);
+router.post("/between", FindBetweenMedicine);
 router.post("/update", UpdateMedicine);
 router.get("/notice/list", GetNoticeList);
 

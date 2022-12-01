@@ -41,6 +41,12 @@
           v-for="(cat, index) in formData.cats"
           :key="`${cat.name}${index}`"
         >
+          <img
+            v-if="cat.cat.reminder"
+            class="warning"
+            src="~/assets/img/ic-warning.svg"
+            alt=""
+          />
           <a
             class="name"
             target="_blank"
@@ -302,9 +308,7 @@ export default {
 
   async mounted() {},
 
-  updated() {
-    console.log(this.formData.cats[0]);
-  },
+  updated() {},
 
   methods: {
     dateHandler() {
