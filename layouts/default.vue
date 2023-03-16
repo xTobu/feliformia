@@ -1,15 +1,20 @@
 <template>
   <div>
-    <nuxt :key="$route.fullPath" />
+    <div class="wrapper">
+      <nuxt :key="$route.fullPath" />
+    </div>
     <Footer />
+    <FloatButton />
   </div>
 </template>
 
 <script>
 import Footer from "./../components/Footer.vue";
+import FloatButton from "./../components/FloatButton.vue";
 export default {
   components: {
     Footer,
+    FloatButton,
   },
   // page component definitions
 };
@@ -23,6 +28,7 @@ $brown: #8e8783;
 
 body,
 html {
+  padding-right: 0px !important;
   height: initial !important;
   width: 100%;
   overflow-x: hidden;
@@ -335,7 +341,21 @@ a {
   line-height: 1.5;
   padding: 20px 0;
 }
-
+.el-drawer__body {
+  border-top: solid 24px white;
+}
+.el-dialog__header {
+  span {
+    font-weight: 500;
+    color: #6da2c2;
+  }
+}
+.el-dialog__body {
+  padding: 0px 30px !important;
+}
+.el-dialog__footer {
+  text-align: center !important;
+}
 .el-select-dropdown {
   max-width: 70%;
 }
