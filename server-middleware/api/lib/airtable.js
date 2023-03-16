@@ -1,7 +1,7 @@
 import airtable from "airtable";
 
 const client = new airtable({
-  apiKey: process.env.AIRTABLE_API_KEY,
+  apiKey: process.env.AIRTABLE_API_ACCESS_TOKEN,
 });
 
 const base = {
