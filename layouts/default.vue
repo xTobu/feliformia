@@ -4,7 +4,6 @@
       <nuxt :key="$route.fullPath" />
     </div>
     <Footer />
-    <FloatButton />
   </div>
 </template>
 

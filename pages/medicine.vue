@@ -100,11 +100,16 @@
         <NuxtLink class="f_red" to="/regular">前往飲食及如廁紀錄</NuxtLink>
       </div>
     </form>
+    <FloatButton />
   </div>
 </template>
 
 <script>
+import FloatButton from "./../components/FloatButton.vue";
 export default {
+  components: {
+    FloatButton,
+  },
   layout: "default",
   head: {
     title: "餵藥及特殊飲食須知",
