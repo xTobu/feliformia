@@ -185,10 +185,13 @@
         <button type="submit" class="btn" v-show="!isDisabled">
           {{ loadingSubmit ? "儲存中..." : "送出" }}
         </button>
-        <NuxtLink class="f_red" :to="prevLink">看前班紀錄</NuxtLink>
+        <NuxtLink class="f_red" :to="prevLink" target="_blank"
+          >看前班紀錄</NuxtLink
+        >
         <NuxtLink class="f_red" to="/regular">回到今天</NuxtLink>
-        <NuxtLink class="f_red" to="/">回首頁</NuxtLink>
-        <NuxtLink class="f_red" to="/medicine">前往餵藥及特殊飲食須知</NuxtLink>
+        <NuxtLink class="f_red" to="/medicine" target="_blank"
+          >前往餵藥及特殊飲食須知</NuxtLink
+        >
       </div>
     </form>
     <FloatButton />

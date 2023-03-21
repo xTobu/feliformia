@@ -13,10 +13,10 @@
       <div class="drawer__content">
         <ul>
           <li class="red" @click="toggleDialogNotice()"># 注意事項</li>
-          <li class="red" @click="goto('regular')"># 飲食及如廁紀錄</li>
-          <li class="red" @click="goto('medicine')"># 餵藥及特殊飲食表</li>
-          <li @click="goto('weekly')">卯咪飲食週表</li>
-          <li @click="goto('weekly-medicine')">卯咪餵藥週表</li>
+          <li class="red" @click="open('regular')"># 飲食及如廁紀錄</li>
+          <li class="red" @click="open('medicine')"># 餵藥及特殊飲食表</li>
+          <li @click="open('weekly')">卯咪飲食週表</li>
+          <li @click="open('weekly-medicine')">卯咪餵藥週表</li>
           <li
             @click="
               open(
