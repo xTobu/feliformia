@@ -188,7 +188,9 @@
         <NuxtLink class="f_red" :to="prevLink" target="_blank"
           >看前班紀錄</NuxtLink
         >
-        <NuxtLink class="f_red" to="/regular">回到今天</NuxtLink>
+        <NuxtLink class="f_red" to="/regular" target="_blank"
+          >回到今天</NuxtLink
+        >
         <NuxtLink class="f_red" to="/medicine" target="_blank"
           >前往餵藥及特殊飲食須知</NuxtLink
         >
