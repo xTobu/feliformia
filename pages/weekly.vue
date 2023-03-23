@@ -82,11 +82,16 @@
         </template>
       </el-table-column>
     </el-table>
+    <FloatButton />
   </div>
 </template>
 
 <script>
+import FloatButton from "./../components/FloatButton.vue";
 export default {
+  components: {
+    FloatButton,
+  },
   layout: "weekly",
   head: {
     title: "卯咪健康週表",
