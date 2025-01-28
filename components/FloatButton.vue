@@ -33,17 +33,17 @@
 
     <el-dialog
       title="注意事項"
-      :visible.sync="showDialogNotice"
+      :visible.sync="showDialogMind"
       width="90%"
       :show-close="false"
       :with-header="false"
     >
-      <p v-if="notices.length == 0">LOADING...</p>
+      <p v-if="minds.length == 0">LOADING...</p>
       <div
         class="md"
-        v-for="(notice, index) in notices"
-        :key="`${notice.recordId}${index}`"
-        v-html="markdownToHtml(notice.note)"
+        v-for="(mind, index) in minds"
+        :key="`${mind.Id}${index}`"
+        v-html="markdownToHtml(mind.note)"
       ></div>
 
       <span slot="footer" class="dialog-footer">
@@ -59,8 +59,8 @@ export default {
   data() {
     return {
       drawer: false,
-      showDialogNotice: false,
-      notices: [],
+      showDialogMind: false,
+      minds: [],
     };
   },
   computed: {},
@@ -83,15 +83,15 @@ export default {
       return marked(markdown);
     },
     toggleDialogNotice() {
-      this.showDialogNotice = !this.showDialogNotice;
-      if (this.notices.length == 0) {
+      this.showDialogMind = !this.showDialogMind;
+      if (this.minds.length == 0) {
         this.GetNotice();
       }
     },
 
     async GetNotice() {
-      const { data: notices } = await this.$axios.$get("/notice/list");
-      this.notices = notices;
+      const { data: minds } = await this.$axios.$get("/mind/list");
+      this.minds = minds;
     },
   },
 };

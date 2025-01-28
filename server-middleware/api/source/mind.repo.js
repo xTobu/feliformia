@@ -1,8 +1,7 @@
 import { table } from "../lib/airtable";
 
 export const List = async () => {
-  console.log(table.notice.select);
-  const selector = table.notice.select({
+  const selector = table.mind.select({
     view: "Grid view",
     filterByFormula: "AND(active!='')",
   });
@@ -18,6 +17,6 @@ export const List = async () => {
 };
 
 export const Get = async (recordId) => {
-  const record = await table.notice.find(recordId);
+  const record = await table.mind.find(recordId);
   return record.fields;
 };

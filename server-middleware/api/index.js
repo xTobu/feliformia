@@ -1,7 +1,7 @@
 import express from "express";
 import cat from "./source/cat.route";
 import volunteer from "./source/volunteer.route";
-import notice from "./source/notice.route";
+import mind from "./source/mind.route";
 import regular from "./source/regular.route";
 import medicine from "./source/medicine.route";
 import line from "./source/line.route";
@@ -17,6 +17,6 @@ app.use("/volunteer", volunteer);
 app.use("/regular", regular);
 app.use("/medicine", medicine);
 app.use("/line", line);
-app.use("/notice", notice);
+app.use("/mind", mind);
 
 export default app;

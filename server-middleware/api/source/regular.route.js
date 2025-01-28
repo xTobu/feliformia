@@ -1,5 +1,5 @@
 import express from "express";
-import { Create, Get, Between, Update } from "./regular.repo";
+import { Create, Get, Between, Update } from "./regular.repo.noco";
 import { MakeSuccess, MakeFail } from "../helper/response";
 
 /*
@@ -24,11 +24,11 @@ const FindRegular = async (req, res, next) => {
 };
 
 const UpdateRegular = async (req, res, next) => {
-  const { recordId, date, shift, cats, note, member } = req.body;
+  const { Id, date, shift, cats, note, member } = req.body;
 
   try {
-    await Update({ recordId, date, shift, cats, note, member });
-    return MakeSuccess(res, "");
+    await Update({ Id, date, shift, cats, note, member });
+    return MakeSuccess(res, "ok");
   } catch (error) {
     const { message } = error;
     return MakeFail(res, 400, 1, message);

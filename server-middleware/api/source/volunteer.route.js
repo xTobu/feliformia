@@ -1,5 +1,6 @@
 import express from "express";
 import { List, Get } from "./volunteer.repo";
+import { List as ListNoco, Get as GetNoco } from "./volunteer.repo.noco";
 import { MakeSuccess, MakeFail } from "../helper/response";
 
 /*
@@ -7,7 +8,7 @@ import { MakeSuccess, MakeFail } from "../helper/response";
  */
 const GetVolunteers = async (req, res, next) => {
   try {
-    const volunteers = await List();
+    const volunteers = await ListNoco();
     return MakeSuccess(res, volunteers);
   } catch (error) {
     const { message } = error;
@@ -16,9 +17,9 @@ const GetVolunteers = async (req, res, next) => {
 };
 
 const FindVolunteer = async (req, res, next) => {
-  const { recordId } = req.params;
+  const { Id } = req.params;
   try {
-    const volunteer = await Get(recordId);
+    const volunteer = await GetNoco(Id);
     return MakeSuccess(res, volunteer);
   } catch (error) {
     const { message } = error;
@@ -32,6 +33,6 @@ const FindVolunteer = async (req, res, next) => {
 const router = express.Router();
 
 router.get("/list", GetVolunteers);
-router.get("/:recordId", FindVolunteer);
+router.get("/:Id", FindVolunteer);
 
 export default router;
