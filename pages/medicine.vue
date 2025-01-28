@@ -149,7 +149,7 @@ export default {
         // },
       ],
       formData: {
-        recordId: "",
+        Id: "",
         date: "",
         shift: "",
         cats: [
@@ -332,13 +332,13 @@ export default {
         const { date, shift } = this.formData;
         const { data: regular } = await this.$axios.$get("/medicine", {
           params: {
-            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            date: this.$dayjs(date).format("YYYY-MM-DD"),
             shift,
           },
         });
 
         const {
-          recordId,
+          Id,
           cats,
           date: strDate,
           shift: strShift,
@@ -347,7 +347,7 @@ export default {
           remark,
         } = regular;
 
-        this.formData.recordId = recordId;
+        this.formData.Id = Id;
         this.formData.date = new Date(strDate);
         this.formData.shift = strShift;
         this.formData.cats = cats;
@@ -364,7 +364,7 @@ export default {
         const { date, shift } = this.prevDateShift;
         const { data: medicine } = await this.$axios.$get("/medicine", {
           params: {
-            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            date: this.$dayjs(date).format("YYYY-MM-DD"),
             shift,
           },
         });
@@ -376,9 +376,9 @@ export default {
 
     async UpdateMedicine() {
       try {
-        const { recordId, date, shift, cats, note, member } = this.formData;
+        const { Id, date, shift, cats, note, member } = this.formData;
         await this.$axios.$post("/medicine/update", {
-          recordId,
+          Id,
           date: this.$dayjs(date).format("YYYY-MM-DD"),
           shift,
           cats,

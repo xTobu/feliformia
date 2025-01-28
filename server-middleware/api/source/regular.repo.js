@@ -1,6 +1,6 @@
 import { table } from "../lib/airtable";
 import { ShiftMap } from "../helper/constant";
-import repoCat from "./cat.repo";
+import repoCat from "./cat.repo.noco";
 import repoLine from "./line.repo";
 import dayjs from "dayjs";
 
@@ -85,7 +85,7 @@ export const Update = async (body) => {
   const { recordId, date, shift, cats, note, member } = body;
   try {
     const oldData = await Get({
-      date: dayjs(date).format("MM/DD/YYYY"),
+      date: dayjs(date).format("YYYY-MM-DD"),
       shift,
     });
     const { note: oldNote } = oldData[0];

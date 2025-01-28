@@ -1,5 +1,5 @@
 import express from "express";
-import { Create, Get, Between, Update, ListNotice } from "./medicine.repo";
+import { Create, Get, Between, Update, ListNotice } from "./medicine.repo.noco";
 import { MakeSuccess, MakeFail } from "../helper/response";
 
 /*
@@ -7,7 +7,7 @@ import { MakeSuccess, MakeFail } from "../helper/response";
  */
 const GetNoticeList = async (req, res, next) => {
   try {
-    const list = await ListNotice();
+    const list = await ListNotice({ shift: "night" });
     return MakeSuccess(res, list);
   } catch (error) {
     const { message } = error;
@@ -52,11 +52,11 @@ const FindBetweenMedicine = async (req, res, next) => {
 };
 
 const UpdateMedicine = async (req, res, next) => {
-  const { recordId, date, shift, cats, note, member } = req.body;
+  const { Id, date, shift, cats, note, member } = req.body;
 
   try {
-    await Update({ recordId, date, shift, cats, note, member });
-    return MakeSuccess(res, "");
+    await Update({ Id, date, shift, cats, note, member });
+    return MakeSuccess(res, "ok");
   } catch (error) {
     const { message } = error;
     return MakeFail(res, 400, 1, message);
@@ -71,6 +71,7 @@ const router = express.Router();
 router.get("/", FindMedicine);
 router.post("/between", FindBetweenMedicine);
 router.post("/update", UpdateMedicine);
-router.get("/notice/list", GetNoticeList);
+
+router.get("/list-notice", GetNoticeList);
 
 export default router;

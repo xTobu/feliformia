@@ -8,7 +8,7 @@ const base = {
   cat: client.base(process.env.AIRTABLE_BASEID_CAT),
   regular: client.base(process.env.AIRTABLE_BASEID_REGULAR),
   volunteer: client.base(process.env.AIRTABLE_BASEID_VOLUNTEER),
-  notice: client.base(process.env.AIRTABLE_BASEID_NOTICE),
+  mind: client.base(process.env.AIRTABLE_BASEID_NOTICE),
   medicine: client.base(process.env.AIRTABLE_BASEID_MEDICINE),
 };
 
@@ -20,5 +20,5 @@ export const table = {
     main: base.medicine("main"),
     notice: base.medicine("notice"),
   },
-  notice: base.notice("main"),
+  mind: base.mind("main"),
 };

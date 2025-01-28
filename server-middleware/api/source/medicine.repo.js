@@ -94,7 +94,7 @@ export const Update = async (body) => {
   const { recordId, date, shift, cats, note, member } = body;
   try {
     const oldData = await Get({
-      date: dayjs(date).format("MM/DD/YYYY"),
+      date: dayjs(date).format("YYYY-MM-DD"),
       shift,
     });
     const { note: oldNote } = oldData[0];

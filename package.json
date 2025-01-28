@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": "16.x"
+    "node": "18.x"
   },
   "scripts": {
     "dev": "nuxt",
@@ -24,11 +24,13 @@
     "express": "^4.17.1",
     "jquery": "^3.4.1",
     "marked": "^4.2.3",
+    "node-fetch-native": "^1.6.6",
     "nuxt": "^2.13.3",
     "qs": "^6.7.0",
     "vercel": "^23.1.2",
     "vue-axios": "^2.1.4",
-    "vue-sweetalert2": "^5.0.2"
+    "vue-sweetalert2": "^5.0.2",
+    "vue-template-compiler": "^2.7.16"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.1",
