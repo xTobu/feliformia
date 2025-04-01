@@ -147,6 +147,10 @@ export const Update = async (body) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
+    if (note == "") {
+      return;
+    }
+
     if (note != oldNote) {
       const textDate = dayjs(date).format("YYYY/MM/DD");
       const textShift = ShiftMap(shift);
