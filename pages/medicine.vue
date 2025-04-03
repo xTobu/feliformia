@@ -449,14 +449,14 @@ export default {
           this.formData.member || ""
         }\n回報：\n${this.formData.note || ""}`;
         const textSite =
-          process.env.DEPLOY_SITE == "feliformia"
+          process.env.deploySite == "feliformia"
             ? ""
-            : `[${process.env.DEPLOY_SITE || "Local"}]\n`;
-        const textManual = '[大哥通知]\n'
+            : `[${process.env.deploySite || "Local"}]\n`;
+        const textManual = "[大哥通知]\n";
 
         const htmlPush = `<div style="text-align: left;"><b><h3>將以下訊息通知大哥</h3></b>餵藥及特殊飲食紀錄<br>---------------<br>日期： ${textDate}<br>班別： ${textShift}<br>志工： ${
-            this.formData.member || ""
-          }<br>回報：<br>${this.formData.note || ""}</div>`
+          this.formData.member || ""
+        }<br>回報：<br>${this.formData.note || ""}</div>`;
 
         const { isConfirmed } = await this.$swal.fire({
           // title: "",
@@ -472,10 +472,38 @@ export default {
           confirmButtonColor: "#b33a39",
           confirmButtonText: "是的",
         });
+
         if (isConfirmed) {
-          await this.$axios.$post("/line/message/push", {
-            text: textSite + textManual + textPush,
-          });
+          try {
+            await this.$axios.$post("/line/message/push", {
+              text: textSite + textManual + textPush,
+            });
+
+            this.$swal.fire({
+              text: "手動發送成功",
+              showClass: {
+                popup: "animate__animated animate__fadeIn animate__faster",
+              },
+              hideClass: {
+                popup: "",
+              },
+              showCancelButton: false,
+              confirmButtonColor: "#b33a39",
+              confirmButtonText: "關閉",
+            });
+          } catch (e) {
+            this.$swal.fire({
+              html: "手動發送失敗。<br>請確認網路狀態後重試，<br>或聯繫俊翔。",
+              showClass: {
+                popup: "animate__animated animate__fadeIn animate__faster",
+              },
+              hideClass: {
+                popup: "",
+              },
+              confirmButtonColor: "#b33a39",
+              confirmButtonText: "關閉",
+            });
+          }
         }
       } catch (e) {
         console.error(e);
