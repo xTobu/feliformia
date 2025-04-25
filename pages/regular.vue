@@ -47,7 +47,7 @@
             src="~/assets/img/ic-warning.svg"
             alt=""
           />
-          <a class="name" target="_blank" :href="'weekly?cat=' + cat.cat.Id">{{
+          <a class="name" target="_blank" :href="'weekly?cat=' + cat.cat.recordId">{{
             cat.name
           }}</a>
           <div class="detail">
@@ -261,7 +261,7 @@ export default {
         // },
       ],
       formData: {
-        Id: "",
+        recordId: "",
         date: "",
         shift: "",
         cats: [
@@ -321,7 +321,6 @@ export default {
       await Promise.all([
         this.InitMemberList(),
         this.InitRegular(),
-        this.InitPrevRegular(),
       ]);
     } catch (error) {
       console.error(error);
@@ -342,7 +341,9 @@ export default {
     }
   },
 
-  async mounted() {},
+  async mounted() {
+    await this.InitPrevRegular();
+  },
 
   updated() {},
 
@@ -495,27 +496,25 @@ export default {
         const { date, shift } = this.formData;
         const { data: regular } = await this.$axios.$get("/regular", {
           params: {
-            date: this.$dayjs(date).format("YYYY-MM-DD"),
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
             shift,
           },
         });
 
         const {
-          Id,
+          recordId,
           cats,
           date: strDate,
           shift: strShift,
           member,
           note,
-          remark,
         } = regular;
 
-        this.formData.Id = Id;
+        this.formData.recordId = recordId;
         this.formData.date = new Date(strDate);
         this.formData.shift = strShift;
         this.formData.cats = cats;
         this.formData.note = note;
-        this.formData.remark = remark;
         this.formData.member = member;
       } catch (e) {
         console.error(e);
@@ -528,7 +527,7 @@ export default {
         const { date, shift } = this.prevDateShift;
         const { data: regular } = await this.$axios.$get("/regular", {
           params: {
-            date: this.$dayjs(date).format("YYYY-MM-DD"),
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
             shift,
           },
         });
@@ -541,10 +540,10 @@ export default {
 
     async UpdateRegular() {
       try {
-        const { Id, date, shift, cats, note, member } = this.formData;
+        const { recordId, date, shift, cats, note, member } = this.formData;
         await this.$axios.$post("/regular/update", {
-          Id,
-          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          recordId,
+          date: this.$dayjs(date).format("MM/DD/YYYY"),
           shift,
           cats,
           note,

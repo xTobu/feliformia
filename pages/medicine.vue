@@ -159,7 +159,7 @@ export default {
         // },
       ],
       formData: {
-        Id: "",
+        recordId: "",
         date: "",
         shift: "",
         cats: [
@@ -194,7 +194,7 @@ export default {
       return {
         name: "medicine",
         query: {
-          date: this.$dayjs(this.prevDateShift.date).format("YYYY-MM-DD"),
+          date: this.$dayjs(this.prevDateShift.date).format("MM/DD/YYYY"),
           shift: this.prevDateShift.shift,
         },
       };
@@ -213,7 +213,7 @@ export default {
       await Promise.all([
         this.InitMemberList(),
         this.InitMedicine(),
-        this.InitPrevMedicine(),
+
       ]);
     } catch (e) {
       console.error(e);
@@ -234,7 +234,10 @@ export default {
     }
   },
   updated() {},
-  mounted() {},
+
+  async mounted() {
+    await this.InitPrevMedicine();
+  },
   methods: {
     disableShift(fromShift) {
       const { date } = this.formData;
@@ -376,7 +379,7 @@ export default {
     async InitMedicine() {
       try {
         const { date, shift } = this.formData;
-        const { data: regular } = await this.$axios.$get("/medicine", {
+        const { data: medicine } = await this.$axios.$get("/medicine", {
           params: {
             date: this.$dayjs(date).format("YYYY-MM-DD"),
             shift,
@@ -384,21 +387,19 @@ export default {
         });
 
         const {
-          Id,
+          recordId,
           cats,
           date: strDate,
           shift: strShift,
           member,
           note,
-          remark,
-        } = regular;
+        } = medicine;
 
-        this.formData.Id = Id;
+        this.formData.recordId = recordId;
         this.formData.date = new Date(strDate);
         this.formData.shift = strShift;
         this.formData.cats = cats;
         this.formData.note = note;
-        this.formData.remark = remark;
         this.formData.member = member;
       } catch (e) {
         console.error(e);
@@ -411,10 +412,11 @@ export default {
         const { date, shift } = this.prevDateShift;
         const { data: medicine } = await this.$axios.$get("/medicine", {
           params: {
-            date: this.$dayjs(date).format("YYYY-MM-DD"),
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
             shift,
           },
         });
+
         this.formData.remark = medicine.note;
       } catch (e) {
         console.error(e);
@@ -424,10 +426,10 @@ export default {
 
     async UpdateMedicine() {
       try {
-        const { Id, date, shift, cats, note, member } = this.formData;
+        const { recordId, date, shift, cats, note, member } = this.formData;
         await this.$axios.$post("/medicine/update", {
-          Id,
-          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          recordId,
+          date: this.$dayjs(date).format("MM/DD/YYYY"),
           shift,
           cats,
           note,

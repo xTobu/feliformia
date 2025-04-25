@@ -1,5 +1,6 @@
 import express from "express";
-import { List, Get } from "./mind.repo.noco";
+// import { List, Get } from "./mind.repo.noco";
+import { List, Get } from "./mind.repo";
 import { MakeSuccess, MakeFail } from "../helper/response";
 
 /*
@@ -16,9 +17,9 @@ const GetMinds = async (req, res, next) => {
 };
 
 const FindMind = async (req, res, next) => {
-  const { Id } = req.params;
+  const { recordId } = req.params;
   try {
-    const mind = await Get(Id);
+    const mind = await Get(recordId);
     return MakeSuccess(res, mind);
   } catch (error) {
     const { message } = error;
@@ -32,6 +33,6 @@ const FindMind = async (req, res, next) => {
 const router = express.Router();
 
 router.get("/list", GetMinds);
-router.get("/:Id", FindMind);
+router.get("/:recordId", FindMind);
 
 export default router;

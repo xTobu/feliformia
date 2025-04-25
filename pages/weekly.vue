@@ -128,7 +128,7 @@ export default {
       const arrCatWeek = dataWeekly.reduce(
         (accumulator, { id, date, shift, cats }, currentIndex, array) => {
           const cat = cats.find(function (item, index, array) {
-            return item.cat.Id == selectedCat;
+            return item.cat.recordId == selectedCat;
           });
           if (!cat) {
             return accumulator;
@@ -221,8 +221,8 @@ export default {
         const { data: dataWeekly } = await this.$axios.$post(
           "/regular/between",
           {
-            dateStart: this.$dayjs().subtract(7, "day").format("YYYY-MM-DD"),
-            dateEnd: this.$dayjs().format("YYYY-MM-DD"),
+            dateStart: this.$dayjs().subtract(7, "day").format("MM/DD/YYYY"),
+            dateEnd: this.$dayjs().format("MM/DD/YYYY"),
           }
         );
         this.dataWeekly = [...dataWeekly];
@@ -237,25 +237,21 @@ export default {
 
       // tmp: nocodb 轉換時期的短暫修正
       const catMap = {
-        rec0xzYZAVfQCjxLV: "1",
-        recB3enypPUcjz8fJ: "2",
-        recBAaWZDsH2Vzggq: "3",
-        recD5bj4jRSWIwwer: "4",
-        recLofdWO4ZtBz7iz: "5",
-        recNdlkK4kSrVsCUt: "6",
-        recPA6UKMhB1PzWM8: "7",
-        recTNLtGAL6KwXkTd: "8",
-        recUBheGMfjVkFjlQ: "9",
-        recW7li1OBfpVVUm5: "10",
-        recWT0W5XkQDtxg2R: "11",
-        reciPLimCpNQOcoRN: "12",
-        recjyz4JspGJLphhk: "13",
-        reclhSCimZ4JnCLUu: "14",
-        recoGIWcdBwY99LCR: "15",
-        recqfphUWxeNYHLcw: "17",
-        recrVZroAQeESrYJj: "18",
-        recs0gPLGMrFnWzic: "20",
-        recsjezmAMjQoROJ2: "21",
+        9: "recTlKicz5zmJSZ8k",
+        7: "recDqnBXJcbUcQnWy",
+        6: "recPrUVgVoqkWGbvM",
+        8: "recW3x9zm2gFEYIoS",
+        3: "recEvSvXlBowDuKkK",
+        56: "recABUG5a3MO54wNV",
+        11: "recE9vcFikzlVn4ik",
+        20: "recozIMjeHREVaqWH",
+        14: "reca618LI5RQWjDTj",
+        2: "reccnmBjEf1swPdg8",
+        4: "rec53w7bg9Ueg7o54",
+        17: "rec8ki4JZgTYO5fdX",
+        5: "recUNFHXjy4NIdiHQ",
+        155: "rec3CjhLWzS4LGcWi",
+        15: "recTgvQfhs7Bh0Fqd",
       };
 
       const objCats = dataWeekly.reduce(
@@ -263,13 +259,13 @@ export default {
           let cats = {};
           currentValue.cats.forEach((dataCat) => {
             // tmp: nocodb 轉換時期的短暫修正
-            if (!dataCat.cat.Id) {
-              dataCat.cat.Id = catMap[dataCat.cat.recordId];
+            if (!dataCat.cat.recordId) {
+              dataCat.cat.recordId = catMap[dataCat.cat.Id];
             }
 
-            cats[dataCat.cat.Id] = dataCat.cat.name;
-            if (queryCat && queryCat === dataCat.cat.Id) {
-              this.selectedCat = dataCat.cat.Id;
+            cats[dataCat.cat.recordId] = dataCat.cat.name;
+            if (queryCat && queryCat === dataCat.cat.recordId) {
+              this.selectedCat = dataCat.cat.recordId;
             }
           });
           return { ...accumulator, ...cats };

@@ -211,8 +211,8 @@ export default {
         const { data: dataWeekly } = await this.$axios.$post(
           "/medicine/between",
           {
-            dateStart: this.$dayjs().subtract(7, "day").format("YYYY-MM-DD"),
-            dateEnd: this.$dayjs().format("YYYY-MM-DD"),
+            dateStart: this.$dayjs().subtract(7, "day").format("MM/DD/YYYY"),
+            dateEnd: this.$dayjs().format("MM/DD/YYYY"),
           }
         );
         this.dataWeekly = [...dataWeekly];
@@ -231,8 +231,8 @@ export default {
           currentValue.cats.forEach((dataCat) => {
             cats[dataCat.name] = true;
             // TODO : Medicine 超連結
-            // if (queryCat && queryCat === dataCat.cat.Id) {
-            //   this.selectedCat = dataCat.cat.Id;
+            // if (queryCat && queryCat === dataCat.cat.recordId) {
+            //   this.selectedCat = dataCat.cat.recordId;
             // }
           });
           return { ...accumulator, ...cats };
