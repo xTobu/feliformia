@@ -1,6 +1,5 @@
 import express from "express";
-import { List, Get } from "./cat.repo";
-// import { List as ListNoco, Get as GetNoco } from "./cat.repo.noco";
+import { List, Get } from "./cat.repo.sb";
 
 import { MakeSuccess, MakeFail } from "../helper/response";
 

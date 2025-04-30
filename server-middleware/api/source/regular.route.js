@@ -1,6 +1,5 @@
 import express from "express";
-// import { Create, Get, Between, Update } from "./regular.repo.noco";
-import { Create, Get, Between, Update } from "./regular.repo";
+import { Create, Get, Between, Update } from "./regular.repo.sb";
 import { MakeSuccess, MakeFail } from "../helper/response";
 
 /*

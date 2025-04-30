@@ -1,6 +1,6 @@
 import express from "express";
 // import { Create, Get, Between, Update, ListNotice } from "./medicine.repo.noco";
-import { Create, Get, Between, Update, ListNotice } from "./medicine.repo";
+import { Create, Get, Between, Update, ListNotice } from "./medicine.repo.sb";
 import { MakeSuccess, MakeFail } from "../helper/response";
 
 /*

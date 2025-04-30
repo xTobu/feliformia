@@ -235,32 +235,57 @@ export default {
       const { dataWeekly } = this;
       const queryCat = this.$route.query.cat;
 
-      // tmp: nocodb 轉換時期的短暫修正
-      const catMap = {
-        9: "recTlKicz5zmJSZ8k",
-        7: "recDqnBXJcbUcQnWy",
-        6: "recPrUVgVoqkWGbvM",
-        8: "recW3x9zm2gFEYIoS",
-        3: "recEvSvXlBowDuKkK",
-        56: "recABUG5a3MO54wNV",
-        11: "recE9vcFikzlVn4ik",
-        20: "recozIMjeHREVaqWH",
-        14: "reca618LI5RQWjDTj",
-        2: "reccnmBjEf1swPdg8",
-        4: "rec53w7bg9Ueg7o54",
-        17: "rec8ki4JZgTYO5fdX",
-        5: "recUNFHXjy4NIdiHQ",
-        155: "rec3CjhLWzS4LGcWi",
-        15: "recTgvQfhs7Bh0Fqd",
+      // tmp: airtable to supabase 轉換時期的短暫修正
+      const catIdToRecordIdMap = {
+        9: 1,
+        7: 2,
+        6: 3,
+        8: 4,
+        3: 5,
+        56: 6,
+        11: 7,
+        20: 8,
+        14: 9,
+        2: 10,
+        4: 11,
+        17: 12,
+        5: 13,
+        155: 14,
+        15: 15,
+      };
+
+      const catAirtableIdToRecordIdMap = {
+        recTlKicz5zmJSZ8k: 1,
+        recDqnBXJcbUcQnWy: 2,
+        recPrUVgVoqkWGbvM: 3,
+        recW3x9zm2gFEYIoS: 4,
+        recEvSvXlBowDuKkK: 5,
+        recABUG5a3MO54wNV: 6,
+        recE9vcFikzlVn4ik: 7,
+        recozIMjeHREVaqWH: 8,
+        reca618LI5RQWjDTj: 9,
+        reccnmBjEf1swPdg8: 10,
+        rec53w7bg9Ueg7o54: 11,
+        rec8ki4JZgTYO5fdX: 12,
+        recUNFHXjy4NIdiHQ: 13,
+        rec3CjhLWzS4LGcWi: 14,
+        recTgvQfhs7Bh0Fqd: 15,
       };
 
       const objCats = dataWeekly.reduce(
         (accumulator, currentValue, currentIndex, array) => {
           let cats = {};
           currentValue.cats.forEach((dataCat) => {
-            // tmp: nocodb 轉換時期的短暫修正
+            // tmp: airtable to supabase 轉換時期的短暫修正
             if (!dataCat.cat.recordId) {
-              dataCat.cat.recordId = catMap[dataCat.cat.Id];
+              dataCat.cat.recordId = catIdToRecordIdMap[dataCat.cat.Id];
+            }
+            if (
+              typeof dataCat.cat.recordId === "string" &&
+              dataCat.cat.recordId.indexOf("rec") === 0
+            ) {
+              dataCat.cat.recordId =
+                catAirtableIdToRecordIdMap[dataCat.cat.recordId];
             }
 
             cats[dataCat.cat.recordId] = dataCat.cat.name;

@@ -1,6 +1,5 @@
 import express from "express";
-// import { List, Get } from "./mind.repo.noco";
-import { List, Get } from "./mind.repo";
+import { List, Get } from "./mind.repo.sb";
 import { MakeSuccess, MakeFail } from "../helper/response";
 
 /*
