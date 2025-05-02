@@ -114,6 +114,7 @@ export const Update = async (body) => {
       .select();
 
     const { note: newNote } = data[0];
+    return;
 
     if (newNote != oldNote) {
       const textDate = dayjs(date).format("YYYY/MM/DD");

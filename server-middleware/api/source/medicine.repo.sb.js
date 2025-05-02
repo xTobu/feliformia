@@ -120,6 +120,8 @@ export const Update = async (body) => {
       .eq("id", recordId)
       .select();
 
+    return;
+
     const { note: newNote } = data[0];
 
     if (newNote != oldNote) {

@@ -49,7 +49,10 @@
                   }}</font>
                 </div>
                 <div class="done">
-                  <el-checkbox v-model="cat.done" :disabled="isDisabled"
+                  <el-checkbox
+                    v-model="cat.done"
+                    :disabled="isDisabled"
+                    @change="onAutoSave"
                     >完成</el-checkbox
                   >
                 </div>
@@ -72,6 +75,7 @@
           v-model="formData.note"
           :disabled="isDisabled"
           placeholder="額外狀況回報"
+          @change="onAutoSave"
         ></el-input>
       </div>
       <div class="W100">
@@ -80,6 +84,7 @@
           filterable
           :disabled="isDisabled"
           placeholder="請選擇填表志工"
+          @change="onAutoSave"
           class="mb20 W100"
         >
           <el-option
@@ -92,14 +97,28 @@
         </el-select>
       </div>
       <div class="W100">
-        <button type="submit" class="btn" v-show="!isDisabled">
+        <!-- <button type="submit" class="btn" v-show="!isDisabled">
           {{ loadingSubmit ? "儲存中..." : "送出" }}
+        </button> -->
+        <p
+          v-if="lastSavedAt"
+          class="saved-time"
+          style="margin-bottom: 10px; float: right"
+        >
+          上次儲存：{{ $dayjs(lastSavedAt).format("HH:mm:ss") }}
+        </p>
+        <button type="submit" class="btn" v-show="!isDisabled">
+          <template v-if="saveStatus === 'saving'">儲存中...</template>
+          <template v-else-if="saveStatus === 'error'"
+            >儲存失敗，請手動重試</template
+          >
+          <template v-else>儲存表單</template>
         </button>
         <button
           type="button"
           class="btn line-green"
           v-show="!isDisabled"
-          @click="NotifyLine"
+          @click="ManualNotifyLine"
         >
           {{ loadingNotify ? "通知中..." : "LINE 手動發送" }}
         </button>
@@ -119,6 +138,7 @@
 </template>
 
 <script>
+import debounce from "lodash/debounce";
 import FloatButton from "./../components/FloatButton.vue";
 import { ShiftMap } from "../server-middleware/api/helper/constant";
 export default {
@@ -131,6 +151,10 @@ export default {
   },
   data() {
     return {
+      realtimeChannel: null,
+      autoSave: null,
+      saveStatus: "success", // success | saving | error
+      lastSavedAt: null,
       loading: true,
       loadingSubmit: false,
       loadingNotify: false,
@@ -206,15 +230,13 @@ export default {
       return day < disabled;
     },
   },
-  created() {},
+  created() {
+    this.autoSave = debounce(this.UpdateMedicine, 300);
+  },
   async beforeMount() {
     try {
       this.InitDateAndShift();
-      await Promise.all([
-        this.InitMemberList(),
-        this.InitMedicine(),
-
-      ]);
+      await Promise.all([this.InitMemberList(), this.InitMedicine()]);
     } catch (e) {
       console.error(e);
 
@@ -239,6 +261,45 @@ export default {
     await this.InitPrevMedicine();
   },
   methods: {
+    onAutoSave() {
+      if (this.formData.recordId) {
+        this.autoSave();
+      }
+    },
+    subscribeToRealtime(recordId) {
+      this.realtimeChannel = this.$supabase
+        .channel("medicine-realtime")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "medicines",
+            filter: `id=eq.${recordId}`,
+          },
+          (payload) => {
+            console.log("payload", payload);
+            if (payload.new) {
+              const {
+                id: recordId,
+                cats,
+                date: strDate,
+                shift: strShift,
+                member,
+                note,
+              } = payload.new;
+
+              this.formData.recordId = recordId;
+              this.formData.date = new Date(strDate);
+              this.formData.shift = strShift;
+              this.formData.cats = JSON.parse(cats);
+              this.formData.note = note;
+              this.formData.member = member;
+            }
+          }
+        )
+        .subscribe();
+    },
     disableShift(fromShift) {
       const { date } = this.formData;
       return (
@@ -272,6 +333,8 @@ export default {
         this.$message.error("請選擇填表志工");
         return;
       }
+      await this.SubmitForm();
+      return;
 
       try {
         const shiftMap = {
@@ -308,6 +371,8 @@ export default {
       try {
         this.loadingSubmit = true;
         await this.UpdateMedicine();
+        return;
+
         this.$swal.fire({
           text: "表單已成功送出",
           showClass: {
@@ -401,6 +466,8 @@ export default {
         this.formData.cats = cats;
         this.formData.note = note;
         this.formData.member = member;
+
+        this.subscribeToRealtime(recordId);
       } catch (e) {
         console.error(e);
         throw e;
@@ -426,6 +493,8 @@ export default {
 
     async UpdateMedicine() {
       try {
+        this.saveStatus = "saving";
+
         const { recordId, date, shift, cats, note, member } = this.formData;
         await this.$axios.$post("/medicine/update", {
           recordId,
@@ -435,13 +504,17 @@ export default {
           note,
           member,
         });
+
+        this.saveStatus = "success";
+        this.lastSavedAt = new Date();
       } catch (e) {
         console.error(e);
+        this.saveStatus = "error";
         throw e;
       }
     },
 
-    async NotifyLine() {
+    async ManualNotifyLine() {
       try {
         this.loadingNotify = true;
 
