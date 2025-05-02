@@ -47,12 +47,9 @@
             src="~/assets/img/ic-warning.svg"
             alt=""
           />
-          <a
-            class="name"
-            target="_blank"
-            :href="'weekly?cat=' + cat.cat.Id"
-            >{{ cat.name }}</a
-          >
+          <a class="name" target="_blank" :href="'weekly?cat=' + cat.cat.recordId">{{
+            cat.name
+          }}</a>
           <div class="detail">
             <div class="feed food d_flex">
               <p class="f_blue">食物</p>
@@ -185,6 +182,15 @@
         <button type="submit" class="btn" v-show="!isDisabled">
           {{ loadingSubmit ? "儲存中..." : "送出" }}
         </button>
+
+        <button
+          type="button"
+          class="btn line-green"
+          v-show="!isDisabled"
+          @click="NotifyLine"
+        >
+          {{ loadingNotify ? "通知中..." : "LINE 手動發送" }}
+        </button>
         <NuxtLink class="f_red" :to="prevLink" target="_blank"
           >看前班紀錄</NuxtLink
         >
@@ -202,6 +208,8 @@
 
 <script>
 import FloatButton from "./../components/FloatButton.vue";
+import { ShiftMap } from "../server-middleware/api/helper/constant";
+
 export default {
   components: {
     FloatButton,
@@ -214,6 +222,7 @@ export default {
     return {
       loading: true,
       loadingSubmit: false,
+      loadingNotify: false,
       noMorningShift: false,
       pickerOptions: {
         disabledDate(time) {
@@ -252,7 +261,7 @@ export default {
         // },
       ],
       formData: {
-        Id: "",
+        recordId: "",
         date: "",
         shift: "",
         cats: [
@@ -307,16 +316,34 @@ export default {
   created() {},
 
   async beforeMount() {
-    await this.InitDateAndShift();
-    await this.InitMemberList();
-    await this.InitRegular();
+    try {
+      this.InitDateAndShift();
+      await Promise.all([
+        this.InitMemberList(),
+        this.InitRegular(),
+      ]);
+    } catch (error) {
+      console.error(error);
 
-    this.loading = false;
-
-    await this.InitPrevRegular();
+      this.$swal.fire({
+        html: `網路連線異常<br>請確認 4G 和 Wi-Fi 連線後重試<br>或聯繫俊翔。<br><br>錯誤資訊：<br>${error.message}`,
+        showClass: {
+          popup: "animate__animated animate__fadeIn animate__faster",
+        },
+        hideClass: {
+          popup: "",
+        },
+        confirmButtonColor: "#b33a39",
+        confirmButtonText: "關閉",
+      });
+    } finally {
+      this.loading = false;
+    }
   },
 
-  async mounted() {},
+  async mounted() {
+    await this.InitPrevRegular();
+  },
 
   updated() {},
 
@@ -386,24 +413,47 @@ export default {
         if (isConfirmed) {
           await this.SubmitForm();
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
     },
     async SubmitForm() {
-      this.loadingSubmit = true;
-      await this.UpdateRegular();
-      this.loadingSubmit = false;
-      this.$swal.fire({
-        text: "表單已成功送出",
-        showClass: {
-          popup: "animate__animated animate__fadeIn animate__faster",
-        },
-        hideClass: {
-          popup: "",
-        },
-        showCancelButton: false,
-        confirmButtonColor: "#b33a39",
-        confirmButtonText: "是的",
-      });
+      try {
+        this.loadingSubmit = true;
+
+        await this.UpdateRegular();
+
+        this.$swal.fire({
+          text: "表單已成功送出",
+          showClass: {
+            popup: "animate__animated animate__fadeIn animate__faster",
+          },
+          hideClass: {
+            popup: "",
+          },
+          showCancelButton: false,
+          confirmButtonColor: "#b33a39",
+          confirmButtonText: "關閉",
+        });
+      } catch (error) {
+        this.$swal.fire({
+          html: "表單送出失敗。<br>請確認網路狀態後重試，<br>或聯繫俊翔。",
+          showClass: {
+            popup: "animate__animated animate__fadeIn animate__faster",
+          },
+          hideClass: {
+            popup: "",
+          },
+          showCancelButton: false,
+          confirmButtonColor: "#b33a39",
+          confirmButtonText: "關閉",
+        });
+
+        console.error(error);
+      } finally {
+        this.loadingSubmit = false;
+      }
     },
     async InitDateAndShift() {
       const {
@@ -446,30 +496,29 @@ export default {
         const { date, shift } = this.formData;
         const { data: regular } = await this.$axios.$get("/regular", {
           params: {
-            date: this.$dayjs(date).format("YYYY-MM-DD"),
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
             shift,
           },
         });
 
         const {
-          Id,
+          recordId,
           cats,
           date: strDate,
           shift: strShift,
           member,
           note,
-          remark,
         } = regular;
 
-        this.formData.Id = Id;
+        this.formData.recordId = recordId;
         this.formData.date = new Date(strDate);
         this.formData.shift = strShift;
         this.formData.cats = cats;
         this.formData.note = note;
-        this.formData.remark = remark;
         this.formData.member = member;
       } catch (e) {
         console.error(e);
+        throw e;
       }
     },
 
@@ -478,22 +527,23 @@ export default {
         const { date, shift } = this.prevDateShift;
         const { data: regular } = await this.$axios.$get("/regular", {
           params: {
-            date: this.$dayjs(date).format("YYYY-MM-DD"),
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
             shift,
           },
         });
         this.formData.remark = regular.note;
       } catch (e) {
         console.error(e);
+        throw e;
       }
     },
 
     async UpdateRegular() {
       try {
-        const { Id, date, shift, cats, note, member } = this.formData;
+        const { recordId, date, shift, cats, note, member } = this.formData;
         await this.$axios.$post("/regular/update", {
-          Id,
-          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          recordId,
+          date: this.$dayjs(date).format("MM/DD/YYYY"),
           shift,
           cats,
           note,
@@ -501,6 +551,80 @@ export default {
         });
       } catch (e) {
         console.error(e);
+        throw e;
+      }
+    },
+
+    async NotifyLine() {
+      try {
+        this.loadingNotify = true;
+
+        const textDate = this.$dayjs(this.formData.date).format("YYYY/MM/DD");
+        const textShift = ShiftMap(this.formData.shift);
+        const textPush = `飲食及如廁紀錄\n---------------\n日期： ${textDate}\n班別： ${textShift}\n志工： ${
+          this.formData.member || ""
+        }\n回報：\n${this.formData.note || ""}`;
+        const textSite =
+          process.env.deploySite == "feliformia"
+            ? ""
+            : `[${process.env.deploySite || "Local"}]\n`;
+        const textManual = "[大哥通知]\n";
+
+        const htmlPush = `<div style="text-align: left;"><b><h3>將以下訊息通知大哥</h3></b>飲食及如廁紀錄<br>---------------<br>日期： ${textDate}<br>班別： ${textShift}<br>志工： ${
+          this.formData.member || ""
+        }<br>回報：<br>${this.formData.note || ""}</div>`;
+
+        const { isConfirmed } = await this.$swal.fire({
+          // title: "",
+          html: htmlPush,
+          showClass: {
+            popup: "animate__animated animate__fadeIn animate__faster",
+          },
+          hideClass: {
+            popup: "",
+          },
+          showCancelButton: true,
+          cancelButtonText: "取消",
+          confirmButtonColor: "#b33a39",
+          confirmButtonText: "是的",
+        });
+        if (isConfirmed) {
+          try {
+            await this.$axios.$post("/line/message/push", {
+              text: textSite + textManual + textPush,
+            });
+
+            this.$swal.fire({
+              text: "手動發送成功",
+              showClass: {
+                popup: "animate__animated animate__fadeIn animate__faster",
+              },
+              hideClass: {
+                popup: "",
+              },
+              showCancelButton: false,
+              confirmButtonColor: "#b33a39",
+              confirmButtonText: "關閉",
+            });
+          } catch (e) {
+            this.$swal.fire({
+              html: "手動發送失敗。<br>請確認網路狀態後重試，<br>或聯繫俊翔。",
+              showClass: {
+                popup: "animate__animated animate__fadeIn animate__faster",
+              },
+              hideClass: {
+                popup: "",
+              },
+              confirmButtonColor: "#b33a39",
+              confirmButtonText: "關閉",
+            });
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        throw e;
+      } finally {
+        this.loadingNotify = false;
       }
     },
   },
@@ -511,6 +635,11 @@ export default {
 #regular {
   a {
     display: block;
+  }
+
+  .line-green {
+    background-color: #03c100; // Line 綠色
+    color: white;
   }
 
   .el-slider {

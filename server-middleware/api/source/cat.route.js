@@ -1,13 +1,12 @@
 import express from "express";
-import { List, Get } from "./cat.repo";
-import { List as ListNoco, Get as GetNoco } from "./cat.repo.noco";
+import { List, Get } from "./cat.repo.sb";
 
 import { MakeSuccess, MakeFail } from "../helper/response";
 
 // Controller
 const GetCats = async (req, res, next) => {
   try {
-    const cats = await ListNoco();
+    const cats = await List();
     return MakeSuccess(res, cats);
   } catch (error) {
     const { message } = error;
@@ -16,9 +15,9 @@ const GetCats = async (req, res, next) => {
 };
 
 const FindCat = async (req, res, next) => {
-  const { Id } = req.params;
+  const { recordId } = req.params;
   try {
-    const cat = await GetNoco(Id);
+    const cat = await Get(recordId);
     return MakeSuccess(res, cat);
   } catch (error) {
     const { message } = error;
@@ -30,6 +29,6 @@ const FindCat = async (req, res, next) => {
 const router = express.Router();
 
 router.get("/list", GetCats);
-router.get("/:Id", FindCat);
+router.get("/:recordId", FindCat);
 
 export default router;

@@ -15,11 +15,13 @@ export const List = async () => {
 
     const { data } = response;
 
-    return data.list.map((record) => ({
-      Id: record.Id,
-      name: record.name,
-      room: record.room,
-    }));
+    return data
+      .filter((record) => record.name)
+      .map((record) => ({
+        Id: record.Id,
+        name: record.name,
+        room: record.room,
+      }));
   } catch (error) {
     console.error("Error fetching list from NocoDB:", error.message);
     throw error;

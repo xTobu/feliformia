@@ -128,7 +128,7 @@ export default {
       const arrCatWeek = dataWeekly.reduce(
         (accumulator, { id, date, shift, cats }, currentIndex, array) => {
           const cat = cats.find(function (item, index, array) {
-            return item.cat.Id == selectedCat;
+            return item.cat.recordId == selectedCat;
           });
           if (!cat) {
             return accumulator;
@@ -221,8 +221,8 @@ export default {
         const { data: dataWeekly } = await this.$axios.$post(
           "/regular/between",
           {
-            dateStart: this.$dayjs().subtract(7, "day").format("YYYY-MM-DD"),
-            dateEnd: this.$dayjs().format("YYYY-MM-DD"),
+            dateStart: this.$dayjs().subtract(7, "day").format("MM/DD/YYYY"),
+            dateEnd: this.$dayjs().format("MM/DD/YYYY"),
           }
         );
         this.dataWeekly = [...dataWeekly];
@@ -235,41 +235,62 @@ export default {
       const { dataWeekly } = this;
       const queryCat = this.$route.query.cat;
 
-      // tmp: nocodb 轉換時期的短暫修正
-      const catMap = {
-        rec0xzYZAVfQCjxLV: "1",
-        recB3enypPUcjz8fJ: "2",
-        recBAaWZDsH2Vzggq: "3",
-        recD5bj4jRSWIwwer: "4",
-        recLofdWO4ZtBz7iz: "5",
-        recNdlkK4kSrVsCUt: "6",
-        recPA6UKMhB1PzWM8: "7",
-        recTNLtGAL6KwXkTd: "8",
-        recUBheGMfjVkFjlQ: "9",
-        recW7li1OBfpVVUm5: "10",
-        recWT0W5XkQDtxg2R: "11",
-        reciPLimCpNQOcoRN: "12",
-        recjyz4JspGJLphhk: "13",
-        reclhSCimZ4JnCLUu: "14",
-        recoGIWcdBwY99LCR: "15",
-        recqfphUWxeNYHLcw: "17",
-        recrVZroAQeESrYJj: "18",
-        recs0gPLGMrFnWzic: "20",
-        recsjezmAMjQoROJ2: "21",
+      // tmp: airtable to supabase 轉換時期的短暫修正
+      const catIdToRecordIdMap = {
+        9: 1,
+        7: 2,
+        6: 3,
+        8: 4,
+        3: 5,
+        56: 6,
+        11: 7,
+        20: 8,
+        14: 9,
+        2: 10,
+        4: 11,
+        17: 12,
+        5: 13,
+        155: 14,
+        15: 15,
+      };
+
+      const catAirtableIdToRecordIdMap = {
+        recTlKicz5zmJSZ8k: 1,
+        recDqnBXJcbUcQnWy: 2,
+        recPrUVgVoqkWGbvM: 3,
+        recW3x9zm2gFEYIoS: 4,
+        recEvSvXlBowDuKkK: 5,
+        recABUG5a3MO54wNV: 6,
+        recE9vcFikzlVn4ik: 7,
+        recozIMjeHREVaqWH: 8,
+        reca618LI5RQWjDTj: 9,
+        reccnmBjEf1swPdg8: 10,
+        rec53w7bg9Ueg7o54: 11,
+        rec8ki4JZgTYO5fdX: 12,
+        recUNFHXjy4NIdiHQ: 13,
+        rec3CjhLWzS4LGcWi: 14,
+        recTgvQfhs7Bh0Fqd: 15,
       };
 
       const objCats = dataWeekly.reduce(
         (accumulator, currentValue, currentIndex, array) => {
           let cats = {};
           currentValue.cats.forEach((dataCat) => {
-            // tmp: nocodb 轉換時期的短暫修正
-            if (!dataCat.cat.Id) {
-              dataCat.cat.Id = catMap[dataCat.cat.recordId];
+            // tmp: airtable to supabase 轉換時期的短暫修正
+            if (!dataCat.cat.recordId) {
+              dataCat.cat.recordId = catIdToRecordIdMap[dataCat.cat.Id];
+            }
+            if (
+              typeof dataCat.cat.recordId === "string" &&
+              dataCat.cat.recordId.indexOf("rec") === 0
+            ) {
+              dataCat.cat.recordId =
+                catAirtableIdToRecordIdMap[dataCat.cat.recordId];
             }
 
-            cats[dataCat.cat.Id] = dataCat.cat.name;
-            if (queryCat && queryCat === dataCat.cat.Id) {
-              this.selectedCat = dataCat.cat.Id;
+            cats[dataCat.cat.recordId] = dataCat.cat.name;
+            if (queryCat && queryCat === dataCat.cat.recordId) {
+              this.selectedCat = dataCat.cat.recordId;
             }
           });
           return { ...accumulator, ...cats };

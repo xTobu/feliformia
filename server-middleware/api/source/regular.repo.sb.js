@@ -1,45 +1,52 @@
-import { table } from "../lib/airtable";
+import { supabase } from "../lib/supabase";
 import { ShiftMap } from "../helper/constant";
-import repoCat from "./cat.repo";
+import repoCat from "./cat.repo.sb";
 import repoLine from "./line.repo";
 import dayjs from "dayjs";
 
+const TABLE_REGULAR = "regulars";
+
 export const Get = async (body) => {
   const { date, shift } = body;
-  const selector = table.regular.select({
-    view: "Grid view",
-    maxRecords: 1,
-    filterByFormula: `AND(IS_SAME(date,'${date}'),shift='${shift}')`,
-  });
+  const { data, error } = await supabase
+    .from(TABLE_REGULAR)
+    .select()
+    .eq("date", date)
+    .eq("shift", shift);
+  if (error) {
+    throw new Error(`HTTP error! status: ${error.status}`);
+  }
 
-  const records = await selector.firstPage();
-  return records.map((record) => {
+  return data.map(({ id, ...rest }) => {
     return {
-      ...record.fields,
-      recordId: record.id,
-      cats: JSON.parse(record.fields.cats),
+      ...rest,
+      recordId: id,
+      cats: JSON.parse(rest.cats),
     };
   });
 };
 
 export const Between = async (body) => {
   const { dateStart, dateEnd } = body;
-  const selector = table.regular.select({
-    view: "Grid view",
-    maxRecords: 100,
-    sort: [
-      { field: "date", direction: "asc" },
-      { field: "shift", direction: "asc" },
-    ],
-    filterByFormula: `AND(IS_AFTER(date,DATEADD('${dateStart}', -1, "days")),IS_BEFORE(date,DATEADD('${dateEnd}', 1, "days")))`,
-  });
 
-  const records = await selector.firstPage();
-  return records.map((record) => {
+  const { data, error } = await supabase
+    .from(TABLE_REGULAR)
+    .select()
+    .gte("date", dateStart)
+    .lte("date", dateEnd)
+    .limit(100)
+    .order("date", { ascending: true })
+    .order("shift", { ascending: true });
+
+  if (error) {
+    throw new Error(`HTTP error! status: ${error.status}`);
+  }
+
+  return data.map(({ id, ...rest }) => {
     return {
-      ...record.fields,
-      recordId: record.id,
-      cats: JSON.parse(record.fields.cats),
+      ...rest,
+      recordId: id,
+      cats: JSON.parse(rest.cats),
     };
   });
 };
@@ -63,20 +70,25 @@ export const Create = async (body) => {
   });
 
   const { date, shift } = body;
-  const records = await table.regular.create([
-    {
-      fields: {
+  const { data, error } = await supabase
+    .from(TABLE_REGULAR)
+    .insert([
+      {
         date,
         shift,
         cats: JSON.stringify(list),
+        createdTime: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
       },
-    },
-  ]);
+    ])
+    .select();
+  if (error) {
+    throw new Error(`HTTP error! status: ${error.status}`);
+  }
 
   return {
-    ...records[0].fields,
-    recordId: records[0].id,
-    cats: JSON.parse(records[0].fields.cats),
+    ...data[0],
+    recordId: data[0].id,
+    cats: JSON.parse(data[0].cats),
   };
 };
 
@@ -85,27 +97,23 @@ export const Update = async (body) => {
   const { recordId, date, shift, cats, note, member } = body;
   try {
     const oldData = await Get({
-      date: dayjs(date).format("MM/DD/YYYY"),
+      date: dayjs(date).format("YYYY-MM-DD"),
       shift,
     });
     const { note: oldNote } = oldData[0];
 
-    const updates = await table.regular.update([
-      {
-        id: recordId,
-        fields: {
-          shift: shift,
-          date: date,
-          cats: JSON.stringify(cats),
-          note: note,
-          member: member,
-        },
-      },
-    ]);
+    const { data, error } = await supabase.from(TABLE_REGULAR).update({
+      shift: shift,
+      date: date,
+      cats: JSON.stringify(cats),
+      note: note,
+      member: member,
+      modifiedTime: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
+    })
+      .eq("id", recordId)
+      .select();
 
-    const {
-      fields: { note: newNote },
-    } = updates[0];
+    const { note: newNote } = data[0];
 
     if (newNote != oldNote) {
       const textDate = dayjs(date).format("YYYY/MM/DD");

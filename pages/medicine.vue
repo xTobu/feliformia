@@ -95,6 +95,14 @@
         <button type="submit" class="btn" v-show="!isDisabled">
           {{ loadingSubmit ? "儲存中..." : "送出" }}
         </button>
+        <button
+          type="button"
+          class="btn line-green"
+          v-show="!isDisabled"
+          @click="NotifyLine"
+        >
+          {{ loadingNotify ? "通知中..." : "LINE 手動發送" }}
+        </button>
         <NuxtLink class="f_red" :to="prevLink" target="_blank"
           >看前班紀錄</NuxtLink
         >
@@ -112,6 +120,7 @@
 
 <script>
 import FloatButton from "./../components/FloatButton.vue";
+import { ShiftMap } from "../server-middleware/api/helper/constant";
 export default {
   components: {
     FloatButton,
@@ -124,6 +133,7 @@ export default {
     return {
       loading: true,
       loadingSubmit: false,
+      loadingNotify: false,
       pickerOptions: {
         disabledDate(time) {
           // 不可選未來的日期
@@ -149,7 +159,7 @@ export default {
         // },
       ],
       formData: {
-        Id: "",
+        recordId: "",
         date: "",
         shift: "",
         cats: [
@@ -184,7 +194,7 @@ export default {
       return {
         name: "medicine",
         query: {
-          date: this.$dayjs(this.prevDateShift.date).format("YYYY-MM-DD"),
+          date: this.$dayjs(this.prevDateShift.date).format("MM/DD/YYYY"),
           shift: this.prevDateShift.shift,
         },
       };
@@ -198,16 +208,36 @@ export default {
   },
   created() {},
   async beforeMount() {
-    await this.InitDateAndShift();
-    await this.InitMemberList();
-    await this.InitMedicine();
+    try {
+      this.InitDateAndShift();
+      await Promise.all([
+        this.InitMemberList(),
+        this.InitMedicine(),
 
-    this.loading = false;
+      ]);
+    } catch (e) {
+      console.error(e);
 
-    await this.InitPrevMedicine();
+      this.$swal.fire({
+        html: `網路連線異常<br>請確認 4G 和 Wi-Fi 連線後重試<br>或聯繫俊翔。<br><br>錯誤資訊：<br>${e.message}`,
+        showClass: {
+          popup: "animate__animated animate__fadeIn animate__faster",
+        },
+        hideClass: {
+          popup: "",
+        },
+        confirmButtonColor: "#b33a39",
+        confirmButtonText: "關閉",
+      });
+    } finally {
+      this.loading = false;
+    }
   },
   updated() {},
-  mounted() {},
+
+  async mounted() {
+    await this.InitPrevMedicine();
+  },
   methods: {
     disableShift(fromShift) {
       const { date } = this.formData;
@@ -275,22 +305,36 @@ export default {
         this.$message.error("請選擇填表志工");
         return;
       }
-
-      this.loadingSubmit = true;
-      await this.UpdateMedicine();
-      this.loadingSubmit = false;
-      this.$swal.fire({
-        text: "表單已成功送出",
-        showClass: {
-          popup: "animate__animated animate__fadeIn animate__faster",
-        },
-        hideClass: {
-          popup: "",
-        },
-        showCancelButton: false,
-        confirmButtonColor: "#b33a39",
-        confirmButtonText: "是的",
-      });
+      try {
+        this.loadingSubmit = true;
+        await this.UpdateMedicine();
+        this.$swal.fire({
+          text: "表單已成功送出",
+          showClass: {
+            popup: "animate__animated animate__fadeIn animate__faster",
+          },
+          hideClass: {
+            popup: "",
+          },
+          showCancelButton: false,
+          confirmButtonColor: "#b33a39",
+          confirmButtonText: "關閉",
+        });
+      } catch (error) {
+        this.$swal.fire({
+          html: "表單送出失敗。<br>請確認網路狀態後重試，<br>或聯繫俊翔。",
+          showClass: {
+            popup: "animate__animated animate__fadeIn animate__faster",
+          },
+          hideClass: {
+            popup: "",
+          },
+          confirmButtonColor: "#b33a39",
+          confirmButtonText: "關閉",
+        });
+      } finally {
+        this.loadingSubmit = false;
+      }
     },
     async InitDateAndShift() {
       const {
@@ -319,18 +363,23 @@ export default {
       }
     },
     async InitMemberList() {
-      const { data: volunteers } = await this.$axios.$get("/volunteer/list");
-      this.memberList = volunteers.map((volunteer) => {
-        return {
-          label: volunteer.name,
-          value: volunteer.name,
-        };
-      });
+      try {
+        const { data: volunteers } = await this.$axios.$get("/volunteer/list");
+        this.memberList = volunteers.map((volunteer) => {
+          return {
+            label: volunteer.name,
+            value: volunteer.name,
+          };
+        });
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
     },
     async InitMedicine() {
       try {
         const { date, shift } = this.formData;
-        const { data: regular } = await this.$axios.$get("/medicine", {
+        const { data: medicine } = await this.$axios.$get("/medicine", {
           params: {
             date: this.$dayjs(date).format("YYYY-MM-DD"),
             shift,
@@ -338,24 +387,23 @@ export default {
         });
 
         const {
-          Id,
+          recordId,
           cats,
           date: strDate,
           shift: strShift,
           member,
           note,
-          remark,
-        } = regular;
+        } = medicine;
 
-        this.formData.Id = Id;
+        this.formData.recordId = recordId;
         this.formData.date = new Date(strDate);
         this.formData.shift = strShift;
         this.formData.cats = cats;
         this.formData.note = note;
-        this.formData.remark = remark;
         this.formData.member = member;
       } catch (e) {
         console.error(e);
+        throw e;
       }
     },
 
@@ -364,22 +412,24 @@ export default {
         const { date, shift } = this.prevDateShift;
         const { data: medicine } = await this.$axios.$get("/medicine", {
           params: {
-            date: this.$dayjs(date).format("YYYY-MM-DD"),
+            date: this.$dayjs(date).format("MM/DD/YYYY"),
             shift,
           },
         });
+
         this.formData.remark = medicine.note;
       } catch (e) {
         console.error(e);
+        throw e;
       }
     },
 
     async UpdateMedicine() {
       try {
-        const { Id, date, shift, cats, note, member } = this.formData;
+        const { recordId, date, shift, cats, note, member } = this.formData;
         await this.$axios.$post("/medicine/update", {
-          Id,
-          date: this.$dayjs(date).format("YYYY-MM-DD"),
+          recordId,
+          date: this.$dayjs(date).format("MM/DD/YYYY"),
           shift,
           cats,
           note,
@@ -387,6 +437,81 @@ export default {
         });
       } catch (e) {
         console.error(e);
+        throw e;
+      }
+    },
+
+    async NotifyLine() {
+      try {
+        this.loadingNotify = true;
+
+        const textDate = this.$dayjs(this.formData.date).format("YYYY/MM/DD");
+        const textShift = ShiftMap(this.formData.shift);
+        const textPush = `餵藥及特殊飲食紀錄\n---------------\n日期： ${textDate}\n班別： ${textShift}\n志工： ${
+          this.formData.member || ""
+        }\n回報：\n${this.formData.note || ""}`;
+        const textSite =
+          process.env.deploySite == "feliformia"
+            ? ""
+            : `[${process.env.deploySite || "Local"}]\n`;
+        const textManual = "[大哥通知]\n";
+
+        const htmlPush = `<div style="text-align: left;"><b><h3>將以下訊息通知大哥</h3></b>餵藥及特殊飲食紀錄<br>---------------<br>日期： ${textDate}<br>班別： ${textShift}<br>志工： ${
+          this.formData.member || ""
+        }<br>回報：<br>${this.formData.note || ""}</div>`;
+
+        const { isConfirmed } = await this.$swal.fire({
+          // title: "",
+          html: htmlPush,
+          showClass: {
+            popup: "animate__animated animate__fadeIn animate__faster",
+          },
+          hideClass: {
+            popup: "",
+          },
+          showCancelButton: true,
+          cancelButtonText: "取消",
+          confirmButtonColor: "#b33a39",
+          confirmButtonText: "是的",
+        });
+
+        if (isConfirmed) {
+          try {
+            await this.$axios.$post("/line/message/push", {
+              text: textSite + textManual + textPush,
+            });
+
+            this.$swal.fire({
+              text: "手動發送成功",
+              showClass: {
+                popup: "animate__animated animate__fadeIn animate__faster",
+              },
+              hideClass: {
+                popup: "",
+              },
+              showCancelButton: false,
+              confirmButtonColor: "#b33a39",
+              confirmButtonText: "關閉",
+            });
+          } catch (e) {
+            this.$swal.fire({
+              html: "手動發送失敗。<br>請確認網路狀態後重試，<br>或聯繫俊翔。",
+              showClass: {
+                popup: "animate__animated animate__fadeIn animate__faster",
+              },
+              hideClass: {
+                popup: "",
+              },
+              confirmButtonColor: "#b33a39",
+              confirmButtonText: "關閉",
+            });
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        throw e;
+      } finally {
+        this.loadingNotify = false;
       }
     },
   },
@@ -397,6 +522,10 @@ export default {
 #medicine {
   a {
     display: block;
+  }
+  .line-green {
+    background-color: #03c100; // Line 綠色
+    color: white;
   }
 }
 
