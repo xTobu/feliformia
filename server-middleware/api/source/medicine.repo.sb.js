@@ -17,7 +17,9 @@ export const ListNotice = async (body) => {
     throw new Error(`HTTP error! status: ${error.status}`);
   }
 
-  return data.map(({ id, ...rest }) => rest);
+  return data
+    .sort((a, b) => a.order - b.order)
+    .map(({ id, ...rest }) => rest);
 };
 
 export const Get = async (body) => {
@@ -27,18 +29,23 @@ export const Get = async (body) => {
     .from(TABLE_MEDICINE)
     .select()
     .eq("date", date)
-    .eq("shift", shift);
+    .eq("shift", shift)
+    .order("createdTime", { ascending: true })
+    .limit(1);
+
   if (error) {
     throw new Error(`HTTP error! status: ${error.status}`);
   }
 
-  return data.map(({ id, ...rest }) => {
-    return {
-      ...rest,
-      recordId: id,
-      cats: JSON.parse(rest.cats),
-    };
-  });
+  if (data.length === 0) {
+    return null;
+  }
+
+  return {
+    ...data[0],
+    recordId: data[0].id,
+    cats: JSON.parse(data[0].cats),
+  };
 };
 
 export const Between = async (body) => {
@@ -88,7 +95,8 @@ export const Create = async (body) => {
         createdTime: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
       },
     ])
-    .select();
+    .select()
+    .limit(1);
   if (error) {
     throw new Error(`HTTP error! status: ${error.status}`);
   }
@@ -103,20 +111,21 @@ export const Create = async (body) => {
 export const Update = async (body) => {
   const { recordId, date, shift, cats, note, member } = body;
   try {
-    const oldData = await Get({
+    const { note: oldNote } = await Get({
       date: dayjs(date).format("YYYY-MM-DD"),
       shift,
     });
-    const { note: oldNote } = oldData[0];
 
-    const { data, error } = await supabase.from(TABLE_MEDICINE).update({
-      shift: shift,
-      date: date,
-      cats: JSON.stringify(cats),
-      note: note,
-      member: member,
-      modifiedTime: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
-    })
+    const { data, error } = await supabase
+      .from(TABLE_MEDICINE)
+      .update({
+        shift: shift,
+        date: date,
+        cats: JSON.stringify(cats),
+        note: note,
+        member: member,
+        modifiedTime: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
+      })
       .eq("id", recordId)
       .select();
 

@@ -10,6 +10,7 @@ export const List = async () => {
     }
 
     return data
+      .sort((a, b) => a.order - b.order)
       .filter((record) => record.name)
       .map((record) => ({
         recordId: record.id,
@@ -29,19 +30,18 @@ export const Get = async (Id) => {
       .select("*")
       .eq("id", Id)
       .eq("adopted", false)
-      .limit(1);
+      .single();
     if (error) {
       throw new Error(`HTTP error! status: ${error.status}`);
     }
-    if (data.length === 0) {
+    if (!data) {
       throw new Error("No data found");
     }
 
-    const record = data[0];
     return {
-      recordId: record.id,
-      name: record.name,
-      room: record.room,
+      recordId: data.id,
+      name: data.name,
+      room: data.room,
     };
   } catch (error) {
     console.error("Error fetching record from Supabase:", error.message);

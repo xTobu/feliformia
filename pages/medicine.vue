@@ -423,7 +423,7 @@ export default {
         this.formData.date <= dateRelease
       ) {
         this.$router.push({
-          name: "regular",
+          name: "medicine",
         });
       }
     },

@@ -19,12 +19,12 @@ const GetNoticeList = async (req, res, next) => {
 const FindMedicine = async (req, res, next) => {
   const { date, shift } = req.query;
   try {
-    const medicines = await Get({ date, shift });
-    if (medicines.length >= 1) {
-      return MakeSuccess(res, medicines[0]);
+    const medicine = await Get({ date, shift });
+    if (medicine) {
+      return MakeSuccess(res, medicine);
     }
 
-    if (medicines.length == 0) {
+    if (!medicine) {
       const record = await Create({ date, shift });
       return MakeSuccess(res, record);
     }

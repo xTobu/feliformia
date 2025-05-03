@@ -8,12 +8,12 @@ import { MakeSuccess, MakeFail } from "../helper/response";
 const FindRegular = async (req, res, next) => {
   const { date, shift } = req.query;
   try {
-    const regulars = await Get({ date, shift });
-    if (regulars.length >= 1) {
-      return MakeSuccess(res, regulars[0]);
+    const regular = await Get({ date, shift });
+    if (regular) {
+      return MakeSuccess(res, regular);
     }
 
-    if (regulars.length == 0) {
+    if (!regular) {
       const record = await Create({ date, shift });
       return MakeSuccess(res, record);
     }
