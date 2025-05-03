@@ -17,7 +17,9 @@ export const ListNotice = async (body) => {
     throw new Error(`HTTP error! status: ${error.status}`);
   }
 
-  return data.map(({ id, ...rest }) => rest);
+  return data
+    .sort((a, b) => a.order - b.order)
+    .map(({ id, ...rest }) => rest);
 };
 
 export const Get = async (body) => {
@@ -109,14 +111,16 @@ export const Update = async (body) => {
     });
     const { note: oldNote } = oldData[0];
 
-    const { data, error } = await supabase.from(TABLE_MEDICINE).update({
-      shift: shift,
-      date: date,
-      cats: JSON.stringify(cats),
-      note: note,
-      member: member,
-      modifiedTime: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
-    })
+    const { data, error } = await supabase
+      .from(TABLE_MEDICINE)
+      .update({
+        shift: shift,
+        date: date,
+        cats: JSON.stringify(cats),
+        note: note,
+        member: member,
+        modifiedTime: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
+      })
       .eq("id", recordId)
       .select();
 

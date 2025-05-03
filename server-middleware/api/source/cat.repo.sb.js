@@ -10,6 +10,7 @@ export const List = async () => {
     }
 
     return data
+      .sort((a, b) => a.order - b.order)
       .filter((record) => record.name)
       .map((record) => ({
         recordId: record.id,
