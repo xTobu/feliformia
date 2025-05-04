@@ -100,13 +100,18 @@
         <!-- <button type="submit" class="btn" v-show="!isDisabled">
           {{ loadingSubmit ? "儲存中..." : "送出" }}
         </button> -->
-        <p
-          v-if="lastSavedAt"
-          class="saved-time"
-          style="margin-bottom: 10px; float: right"
-        >
-          上次儲存：{{ $dayjs(lastSavedAt).format("HH:mm:ss") }}
-        </p>
+        <div class="d_flex space-between">
+          <p class="last-update">
+            即時更新：{{
+              lastUpdatedAt ? $dayjs(lastUpdatedAt).format("HH:mm:ss") : ""
+            }}
+          </p>
+          <p class="last-saved">
+            成功儲存：{{
+              lastSavedAt ? $dayjs(lastSavedAt).format("HH:mm:ss") : "尚無變更"
+            }}
+          </p>
+        </div>
         <button type="submit" class="btn" v-show="!isDisabled">
           <template v-if="saveStatus === 'saving'">儲存中...</template>
           <template v-else-if="saveStatus === 'error'"
@@ -139,6 +144,8 @@
 
 <script>
 import debounce from "lodash/debounce";
+import isEqual from "lodash/isEqual";
+
 import FloatButton from "./../components/FloatButton.vue";
 import { ShiftMap } from "../server-middleware/api/helper/constant";
 export default {
@@ -152,6 +159,7 @@ export default {
   data() {
     return {
       realtimeChannel: null,
+      lastUpdatedAt: null,
       autoSave: null,
       saveStatus: "success", // success | saving | error
       lastSavedAt: null,
@@ -278,7 +286,6 @@ export default {
             filter: `id=eq.${recordId}`,
           },
           (payload) => {
-            console.log("payload", payload);
             if (payload.new) {
               const {
                 id: recordId,
@@ -289,12 +296,35 @@ export default {
                 note,
               } = payload.new;
 
+              const oldFormData = {
+                recordId: this.formData.recordId,
+                date: this.formData.date,
+                shift: this.formData.shift,
+                cats: this.formData.cats,
+                note: this.formData.note,
+                member: this.formData.member,
+              };
+              const newFormData = {
+                recordId,
+                date: new Date(strDate),
+                shift: strShift,
+                cats: JSON.parse(cats),
+                note,
+                member,
+              };
+
+              // 如果資料沒有變更，則不更新
+              if (isEqual(oldFormData, newFormData)) {
+                return;
+              }
+
               this.formData.recordId = recordId;
               this.formData.date = new Date(strDate);
               this.formData.shift = strShift;
               this.formData.cats = JSON.parse(cats);
               this.formData.note = note;
               this.formData.member = member;
+              this.lastUpdatedAt = new Date();
             }
           }
         )
@@ -596,6 +626,19 @@ export default {
   a {
     display: block;
   }
+
+  .last-update {
+    margin: 0 0 5px 0;
+    color: #ccc;
+    font-size: 11px;
+  }
+
+  .last-saved {
+    margin: 0 0 5px 0;
+    color: #ccc;
+    font-size: 11px;
+  }
+
   .line-green {
     background-color: #03c100; // Line 綠色
     color: white;

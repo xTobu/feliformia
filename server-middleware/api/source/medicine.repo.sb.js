@@ -14,7 +14,7 @@ export const ListNotice = async (body) => {
     .select()
     .or(`shift.eq.both,shift.eq.${shift}`);
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`list notice error! error: ${JSON.stringify(error)}`);
   }
 
   return data
@@ -34,7 +34,7 @@ export const Get = async (body) => {
     .limit(1);
 
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`get medicine error! error: ${JSON.stringify(error)}`);
   }
 
   if (data.length === 0) {
@@ -61,7 +61,7 @@ export const Between = async (body) => {
     .order("shift", { ascending: true });
 
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`between medicine error! error: ${JSON.stringify(error)}`);
   }
 
   return data.map(({ id, ...rest }) => {
@@ -97,8 +97,15 @@ export const Create = async (body) => {
     ])
     .select()
     .limit(1);
+
+  // duplicate key error
+  if (error && error.code == "23505") {
+    const medicine = await Get({ date, shift });
+    return medicine;
+  }
+
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`create medicine error! error: ${JSON.stringify(error)}`);
   }
 
   return {
@@ -128,6 +135,10 @@ export const Update = async (body) => {
       })
       .eq("id", recordId)
       .select();
+
+    if (error) {
+      throw new Error(`update medicine error! error: ${JSON.stringify(error)}`);
+    }
 
     return;
 

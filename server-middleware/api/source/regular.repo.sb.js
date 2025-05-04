@@ -17,7 +17,7 @@ export const Get = async (body) => {
     .limit(1);
 
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`get regular error! error: ${JSON.stringify(error)}`);
   }
   if (data.length === 0) {
     return null;
@@ -43,7 +43,7 @@ export const Between = async (body) => {
     .order("shift", { ascending: true });
 
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`between regular error! error: ${JSON.stringify(error)}`);
   }
 
   return data.map(({ id, ...rest }) => {
@@ -86,8 +86,15 @@ export const Create = async (body) => {
     ])
     .select()
     .limit(1);
+
+  // duplicate key error
+  if (error && error.code == "23505") {
+    const regular = await Get({ date, shift });
+    return regular;
+  }
+
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`create regular error! error: ${JSON.stringify(error)}`);
   }
 
   return {
@@ -118,6 +125,10 @@ export const Update = async (body) => {
       })
       .eq("id", recordId)
       .select();
+
+    if (error) {
+      throw new Error(`update regular error! error: ${JSON.stringify(error)}`);
+    }
 
     const { note: newNote } = data[0];
     return;
