@@ -232,9 +232,7 @@
         <div class="d_flex space-between">
           <p class="last-update">
             即時更新：{{
-              lastUpdatedAt
-                ? $dayjs(lastUpdatedAt).format("HH:mm:ss")
-                : ""
+              lastUpdatedAt ? $dayjs(lastUpdatedAt).format("HH:mm:ss") : ""
             }}
           </p>
           <p class="last-saved">
@@ -716,7 +714,9 @@ export default {
           process.env.deploySite == "feliformia"
             ? ""
             : `[${process.env.deploySite || "Local"}]\n`;
-        const textManual = "[大哥通知]\n";
+
+        // const textManual = "[大哥通知]\n";
+        const textManual = "";
 
         const htmlPush = `<div style="text-align: left;"><b><h3>將以下訊息通知大哥</h3></b>飲食及如廁紀錄<br>---------------<br>日期： ${textDate}<br>班別： ${textShift}<br>志工： ${
           this.formData.member || ""

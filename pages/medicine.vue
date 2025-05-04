@@ -557,7 +557,8 @@ export default {
           process.env.deploySite == "feliformia"
             ? ""
             : `[${process.env.deploySite || "Local"}]\n`;
-        const textManual = "[大哥通知]\n";
+        // const textManual = "[大哥通知]\n";
+        const textManual = "";
 
         const htmlPush = `<div style="text-align: left;"><b><h3>將以下訊息通知大哥</h3></b>餵藥及特殊飲食紀錄<br>---------------<br>日期： ${textDate}<br>班別： ${textShift}<br>志工： ${
           this.formData.member || ""
