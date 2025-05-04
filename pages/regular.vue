@@ -390,7 +390,7 @@ export default {
   },
 
   created() {
-    this.autoSave = debounce(this.UpdateRegular, 300);
+    this.autoSave = debounce(this.UpdateRegular, 800);
   },
 
   async beforeMount() {
