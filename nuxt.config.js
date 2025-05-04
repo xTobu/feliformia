@@ -68,11 +68,20 @@ export default {
       src: "~/plugins/axios",
       ssr: true,
     },
+    {
+      src: "~/plugins/supabase.client.js",
+      mode: "client",
+      ssr: false,
+    },
     // { src: '~/static/js/media.js',
     //   mode: 'client',
     //   defer: true
     // }
   ],
+  publicRuntimeConfig: {
+    supabaseUrl: process.env.SUPABASE_URL,
+    supabasePublicKey: process.env.SUPABASE_PUBLIC_KEY,
+  },
 
   /*
    ** Nuxt.js dev-modules

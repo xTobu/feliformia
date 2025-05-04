@@ -221,8 +221,8 @@ export default {
         const { data: dataWeekly } = await this.$axios.$post(
           "/regular/between",
           {
-            dateStart: this.$dayjs().subtract(7, "day").format("MM/DD/YYYY"),
-            dateEnd: this.$dayjs().format("MM/DD/YYYY"),
+            dateStart: this.$dayjs().subtract(7, "day").format("YYYY-MM-DD"),
+            dateEnd: this.$dayjs().format("YYYY-MM-DD"),
           }
         );
         this.dataWeekly = [...dataWeekly];

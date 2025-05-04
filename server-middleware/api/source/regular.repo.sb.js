@@ -12,18 +12,22 @@ export const Get = async (body) => {
     .from(TABLE_REGULAR)
     .select()
     .eq("date", date)
-    .eq("shift", shift);
+    .eq("shift", shift)
+    .order("createdTime", { ascending: true })
+    .limit(1);
+
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`get regular error! error: ${JSON.stringify(error)}`);
+  }
+  if (data.length === 0) {
+    return null;
   }
 
-  return data.map(({ id, ...rest }) => {
-    return {
-      ...rest,
-      recordId: id,
-      cats: JSON.parse(rest.cats),
-    };
-  });
+  return {
+    ...data[0],
+    recordId: data[0].id,
+    cats: JSON.parse(data[0].cats),
+  };
 };
 
 export const Between = async (body) => {
@@ -39,7 +43,7 @@ export const Between = async (body) => {
     .order("shift", { ascending: true });
 
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`between regular error! error: ${JSON.stringify(error)}`);
   }
 
   return data.map(({ id, ...rest }) => {
@@ -55,6 +59,7 @@ export const Between = async (body) => {
 export const Create = async (body) => {
   let list = [];
   const cats = await repoCat.List();
+
   cats.forEach((cat, index, array) => {
     list.push({
       cat: cat,
@@ -80,9 +85,17 @@ export const Create = async (body) => {
         createdTime: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
       },
     ])
-    .select();
+    .select()
+    .limit(1);
+
+  // duplicate key error
+  if (error && error.code == "23505") {
+    const regular = await Get({ date, shift });
+    return regular;
+  }
+
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`create regular error! error: ${JSON.stringify(error)}`);
   }
 
   return {
@@ -96,24 +109,30 @@ export const Create = async (body) => {
 export const Update = async (body) => {
   const { recordId, date, shift, cats, note, member } = body;
   try {
-    const oldData = await Get({
+    const { note: oldNote } = await Get({
       date: dayjs(date).format("YYYY-MM-DD"),
       shift,
     });
-    const { note: oldNote } = oldData[0];
 
-    const { data, error } = await supabase.from(TABLE_REGULAR).update({
-      shift: shift,
-      date: date,
-      cats: JSON.stringify(cats),
-      note: note,
-      member: member,
-      modifiedTime: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
-    })
+    const { data, error } = await supabase
+      .from(TABLE_REGULAR)
+      .update({
+        shift: shift,
+        date: date,
+        cats: JSON.stringify(cats),
+        note: note,
+        member: member,
+        modifiedTime: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
+      })
       .eq("id", recordId)
       .select();
 
+    if (error) {
+      throw new Error(`update regular error! error: ${JSON.stringify(error)}`);
+    }
+
     const { note: newNote } = data[0];
+    return;
 
     if (newNote != oldNote) {
       const textDate = dayjs(date).format("YYYY/MM/DD");

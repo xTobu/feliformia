@@ -8,10 +8,12 @@ export const List = async () => {
     throw new Error(`HTTP error! status: ${error.status}`);
   }
 
-  return data.map((record) => ({
-    recordId: record.id,
-    name: record.name,
-  }));
+  return data
+    .sort((a, b) => a.order - b.order)
+    .map((record) => ({
+      recordId: record.id,
+      name: record.name,
+    }));
 };
 
 export const Get = async (recordId) => {

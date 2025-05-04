@@ -47,9 +47,12 @@
             src="~/assets/img/ic-warning.svg"
             alt=""
           />
-          <a class="name" target="_blank" :href="'weekly?cat=' + cat.cat.recordId">{{
-            cat.name
-          }}</a>
+          <a
+            class="name"
+            target="_blank"
+            :href="'weekly?cat=' + cat.cat.recordId"
+            >{{ cat.name }}</a
+          >
           <div class="detail">
             <div class="feed food d_flex">
               <p class="f_blue">食物</p>
@@ -57,7 +60,12 @@
                 <el-checkbox
                   v-model="cat.feed"
                   :disabled="isDisabled"
-                  @change="(e) => foodHandler('feed', index)"
+                  @change="
+                    (e) => {
+                      foodHandler('feed', index);
+                      onAutoSave();
+                    }
+                  "
                   >乾</el-checkbox
                 >
                 <el-slider
@@ -66,6 +74,11 @@
                   :marks="marks"
                   :show-tooltip="false"
                   :disabled="isDisabled || !cat.feed"
+                  @change="
+                    (e) => {
+                      onAutoSave();
+                    }
+                  "
                   v-if="!noMorningShift"
                 >
                 </el-slider>
@@ -76,6 +89,11 @@
                   :show-tooltip="true"
                   :format-tooltip="formatTooltip"
                   :disabled="isDisabled || !cat.feed"
+                  @change="
+                    (e) => {
+                      onAutoSave();
+                    }
+                  "
                   v-if="noMorningShift"
                 >
                 </el-slider>
@@ -103,7 +121,12 @@
                 <el-checkbox
                   v-model="cat.can"
                   :disabled="isDisabled"
-                  @change="(e) => foodHandler('can', index)"
+                  @change="
+                    (e) => {
+                      foodHandler('can', index);
+                      onAutoSave();
+                    }
+                  "
                   >罐</el-checkbox
                 >
                 <el-slider
@@ -112,6 +135,11 @@
                   :marks="marks"
                   :show-tooltip="false"
                   :disabled="isDisabled || !cat.can"
+                  @change="
+                    (e) => {
+                      onAutoSave();
+                    }
+                  "
                 >
                 </el-slider>
               </div>
@@ -120,13 +148,25 @@
               <p class="f_blue">排泄</p>
               <div class="d_flex">
                 <div class="W40 d_flex">
-                  <el-checkbox v-model="cat.urine" :disabled="isDisabled"
+                  <el-checkbox
+                    v-model="cat.urine"
+                    :disabled="isDisabled"
+                    @change="
+                      (e) => {
+                        onAutoSave();
+                      }
+                    "
                     >尿</el-checkbox
                   >
                   <el-checkbox
                     v-model="cat.feces"
                     :disabled="isDisabled"
-                    @change="(e) => fecesHandler(e, index)"
+                    @change="
+                      (e) => {
+                        fecesHandler(e, index);
+                        onAutoSave();
+                      }
+                    "
                     >便</el-checkbox
                   >
                 </div>
@@ -134,6 +174,11 @@
                   <el-radio-group
                     v-model="cat.feces_warning"
                     :disabled="isDisabled || !cat.feces"
+                    @change="
+                      (e) => {
+                        onAutoSave();
+                      }
+                    "
                   >
                     <el-radio label="正常">正常</el-radio>
                     <el-radio label="軟便">軟便</el-radio>
@@ -159,6 +204,7 @@
           v-model="formData.note"
           :disabled="isDisabled"
           placeholder="額外狀況回報"
+          @change="onAutoSave"
         ></el-input>
       </div>
       <div class="W100">
@@ -168,6 +214,7 @@
           :disabled="isDisabled"
           placeholder="請選擇填表志工"
           class="mb20 W100"
+          @change="onAutoSave"
         >
           <el-option
             v-for="member in memberList"
@@ -179,15 +226,36 @@
         </el-select>
       </div>
       <div class="W100">
-        <button type="submit" class="btn" v-show="!isDisabled">
+        <!-- <button type="submit" class="btn" v-show="!isDisabled">
           {{ loadingSubmit ? "儲存中..." : "送出" }}
+        </button> -->
+        <div class="d_flex space-between">
+          <p class="last-update">
+            即時更新：{{
+              lastUpdatedAt
+                ? $dayjs(lastUpdatedAt).format("HH:mm:ss")
+                : ""
+            }}
+          </p>
+          <p class="last-saved">
+            成功儲存：{{
+              lastSavedAt ? $dayjs(lastSavedAt).format("HH:mm:ss") : "尚無變更"
+            }}
+          </p>
+        </div>
+        <button type="submit" class="btn" v-show="!isDisabled">
+          <template v-if="saveStatus === 'saving'">儲存中...</template>
+          <template v-else-if="saveStatus === 'error'"
+            >儲存失敗，請手動重試</template
+          >
+          <template v-else>儲存表單</template>
         </button>
 
         <button
           type="button"
           class="btn line-green"
           v-show="!isDisabled"
-          @click="NotifyLine"
+          @click="ManualNotifyLine"
         >
           {{ loadingNotify ? "通知中..." : "LINE 手動發送" }}
         </button>
@@ -207,6 +275,9 @@
 </template>
 
 <script>
+import debounce from "lodash/debounce";
+import isEqual from "lodash/isEqual";
+
 import FloatButton from "./../components/FloatButton.vue";
 import { ShiftMap } from "../server-middleware/api/helper/constant";
 
@@ -220,6 +291,11 @@ export default {
   },
   data() {
     return {
+      realtimeChannel: null,
+      lastUpdatedAt: null,
+      autoSave: null,
+      saveStatus: "success", // success | saving | error
+      lastSavedAt: null,
       loading: true,
       loadingSubmit: false,
       loadingNotify: false,
@@ -313,15 +389,14 @@ export default {
     },
   },
 
-  created() {},
+  created() {
+    this.autoSave = debounce(this.UpdateRegular, 300);
+  },
 
   async beforeMount() {
     try {
       this.InitDateAndShift();
-      await Promise.all([
-        this.InitMemberList(),
-        this.InitRegular(),
-      ]);
+      await Promise.all([this.InitMemberList(), this.InitRegular()]);
     } catch (error) {
       console.error(error);
 
@@ -348,6 +423,68 @@ export default {
   updated() {},
 
   methods: {
+    onAutoSave() {
+      if (this.formData.recordId) {
+        this.autoSave();
+      }
+    },
+    subscribeToRealtime(recordId) {
+      this.realtimeChannel = this.$supabase
+        .channel("regular-realtime")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "regulars",
+            filter: `id=eq.${recordId}`,
+          },
+          (payload) => {
+            if (payload.new) {
+              const {
+                id: recordId,
+                cats,
+                date: strDate,
+                shift: strShift,
+                member,
+                note,
+              } = payload.new;
+
+              const oldFormData = {
+                recordId: this.formData.recordId,
+                date: this.formData.date,
+                shift: this.formData.shift,
+                cats: this.formData.cats,
+                note: this.formData.note,
+                member: this.formData.member,
+              };
+
+              const newFormData = {
+                recordId,
+                date: new Date(strDate),
+                shift: strShift,
+                cats: JSON.parse(cats),
+                note,
+                member,
+              };
+
+              // 如果資料沒有變更，則不更新
+              if (isEqual(oldFormData, newFormData)) {
+                return;
+              }
+
+              this.formData.recordId = recordId;
+              this.formData.date = new Date(strDate);
+              this.formData.shift = strShift;
+              this.formData.cats = JSON.parse(cats);
+              this.formData.note = note;
+              this.formData.member = member;
+              this.lastUpdatedAt = new Date();
+            }
+          }
+        )
+        .subscribe();
+    },
     dateHandler() {
       let { date, shift } = this.formData;
       date = date || new Date(date);
@@ -388,6 +525,8 @@ export default {
         return;
       }
 
+      await this.SubmitForm();
+      return;
       try {
         const shiftMap = {
           morning: "早班",
@@ -423,7 +562,7 @@ export default {
         this.loadingSubmit = true;
 
         await this.UpdateRegular();
-
+        return;
         this.$swal.fire({
           text: "表單已成功送出",
           showClass: {
@@ -496,7 +635,7 @@ export default {
         const { date, shift } = this.formData;
         const { data: regular } = await this.$axios.$get("/regular", {
           params: {
-            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            date: this.$dayjs(date).format("YYYY-MM-DD"),
             shift,
           },
         });
@@ -516,6 +655,8 @@ export default {
         this.formData.cats = cats;
         this.formData.note = note;
         this.formData.member = member;
+
+        this.subscribeToRealtime(recordId);
       } catch (e) {
         console.error(e);
         throw e;
@@ -527,7 +668,7 @@ export default {
         const { date, shift } = this.prevDateShift;
         const { data: regular } = await this.$axios.$get("/regular", {
           params: {
-            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            date: this.$dayjs(date).format("YYYY-MM-DD"),
             shift,
           },
         });
@@ -540,22 +681,29 @@ export default {
 
     async UpdateRegular() {
       try {
+        this.saveStatus = "saving";
+
         const { recordId, date, shift, cats, note, member } = this.formData;
+
         await this.$axios.$post("/regular/update", {
           recordId,
-          date: this.$dayjs(date).format("MM/DD/YYYY"),
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
           shift,
           cats,
           note,
           member,
         });
+
+        this.saveStatus = "success";
+        this.lastSavedAt = new Date();
       } catch (e) {
         console.error(e);
+        this.saveStatus = "error";
         throw e;
       }
     },
 
-    async NotifyLine() {
+    async ManualNotifyLine() {
       try {
         this.loadingNotify = true;
 
@@ -635,6 +783,18 @@ export default {
 #regular {
   a {
     display: block;
+  }
+
+  .last-update {
+    margin: 0 0 5px 0;
+    color: #ccc;
+    font-size: 11px;
+  }
+
+  .last-saved {
+    margin: 0 0 5px 0;
+    color: #ccc;
+    font-size: 11px;
   }
 
   .line-green {

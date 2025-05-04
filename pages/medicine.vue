@@ -49,7 +49,10 @@
                   }}</font>
                 </div>
                 <div class="done">
-                  <el-checkbox v-model="cat.done" :disabled="isDisabled"
+                  <el-checkbox
+                    v-model="cat.done"
+                    :disabled="isDisabled"
+                    @change="onAutoSave"
                     >完成</el-checkbox
                   >
                 </div>
@@ -72,6 +75,7 @@
           v-model="formData.note"
           :disabled="isDisabled"
           placeholder="額外狀況回報"
+          @change="onAutoSave"
         ></el-input>
       </div>
       <div class="W100">
@@ -80,6 +84,7 @@
           filterable
           :disabled="isDisabled"
           placeholder="請選擇填表志工"
+          @change="onAutoSave"
           class="mb20 W100"
         >
           <el-option
@@ -92,14 +97,33 @@
         </el-select>
       </div>
       <div class="W100">
-        <button type="submit" class="btn" v-show="!isDisabled">
+        <!-- <button type="submit" class="btn" v-show="!isDisabled">
           {{ loadingSubmit ? "儲存中..." : "送出" }}
+        </button> -->
+        <div class="d_flex space-between">
+          <p class="last-update">
+            即時更新：{{
+              lastUpdatedAt ? $dayjs(lastUpdatedAt).format("HH:mm:ss") : ""
+            }}
+          </p>
+          <p class="last-saved">
+            成功儲存：{{
+              lastSavedAt ? $dayjs(lastSavedAt).format("HH:mm:ss") : "尚無變更"
+            }}
+          </p>
+        </div>
+        <button type="submit" class="btn" v-show="!isDisabled">
+          <template v-if="saveStatus === 'saving'">儲存中...</template>
+          <template v-else-if="saveStatus === 'error'"
+            >儲存失敗，請手動重試</template
+          >
+          <template v-else>儲存表單</template>
         </button>
         <button
           type="button"
           class="btn line-green"
           v-show="!isDisabled"
-          @click="NotifyLine"
+          @click="ManualNotifyLine"
         >
           {{ loadingNotify ? "通知中..." : "LINE 手動發送" }}
         </button>
@@ -119,6 +143,9 @@
 </template>
 
 <script>
+import debounce from "lodash/debounce";
+import isEqual from "lodash/isEqual";
+
 import FloatButton from "./../components/FloatButton.vue";
 import { ShiftMap } from "../server-middleware/api/helper/constant";
 export default {
@@ -131,6 +158,11 @@ export default {
   },
   data() {
     return {
+      realtimeChannel: null,
+      lastUpdatedAt: null,
+      autoSave: null,
+      saveStatus: "success", // success | saving | error
+      lastSavedAt: null,
       loading: true,
       loadingSubmit: false,
       loadingNotify: false,
@@ -194,7 +226,7 @@ export default {
       return {
         name: "medicine",
         query: {
-          date: this.$dayjs(this.prevDateShift.date).format("MM/DD/YYYY"),
+          date: this.$dayjs(this.prevDateShift.date).format("YYYY-MM-DD"),
           shift: this.prevDateShift.shift,
         },
       };
@@ -206,15 +238,13 @@ export default {
       return day < disabled;
     },
   },
-  created() {},
+  created() {
+    this.autoSave = debounce(this.UpdateMedicine, 800);
+  },
   async beforeMount() {
     try {
       this.InitDateAndShift();
-      await Promise.all([
-        this.InitMemberList(),
-        this.InitMedicine(),
-
-      ]);
+      await Promise.all([this.InitMemberList(), this.InitMedicine()]);
     } catch (e) {
       console.error(e);
 
@@ -239,6 +269,67 @@ export default {
     await this.InitPrevMedicine();
   },
   methods: {
+    onAutoSave() {
+      if (this.formData.recordId) {
+        this.autoSave();
+      }
+    },
+    subscribeToRealtime(recordId) {
+      this.realtimeChannel = this.$supabase
+        .channel("medicine-realtime")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "medicines",
+            filter: `id=eq.${recordId}`,
+          },
+          (payload) => {
+            if (payload.new) {
+              const {
+                id: recordId,
+                cats,
+                date: strDate,
+                shift: strShift,
+                member,
+                note,
+              } = payload.new;
+
+              const oldFormData = {
+                recordId: this.formData.recordId,
+                date: this.formData.date,
+                shift: this.formData.shift,
+                cats: this.formData.cats,
+                note: this.formData.note,
+                member: this.formData.member,
+              };
+              const newFormData = {
+                recordId,
+                date: new Date(strDate),
+                shift: strShift,
+                cats: JSON.parse(cats),
+                note,
+                member,
+              };
+
+              // 如果資料沒有變更，則不更新
+              if (isEqual(oldFormData, newFormData)) {
+                return;
+              }
+
+              this.formData.recordId = recordId;
+              this.formData.date = new Date(strDate);
+              this.formData.shift = strShift;
+              this.formData.cats = JSON.parse(cats);
+              this.formData.note = note;
+              this.formData.member = member;
+              this.lastUpdatedAt = new Date();
+            }
+          }
+        )
+        .subscribe();
+    },
     disableShift(fromShift) {
       const { date } = this.formData;
       return (
@@ -272,6 +363,8 @@ export default {
         this.$message.error("請選擇填表志工");
         return;
       }
+      await this.SubmitForm();
+      return;
 
       try {
         const shiftMap = {
@@ -308,6 +401,8 @@ export default {
       try {
         this.loadingSubmit = true;
         await this.UpdateMedicine();
+        return;
+
         this.$swal.fire({
           text: "表單已成功送出",
           showClass: {
@@ -358,7 +453,7 @@ export default {
         this.formData.date <= dateRelease
       ) {
         this.$router.push({
-          name: "regular",
+          name: "medicine",
         });
       }
     },
@@ -401,6 +496,8 @@ export default {
         this.formData.cats = cats;
         this.formData.note = note;
         this.formData.member = member;
+
+        this.subscribeToRealtime(recordId);
       } catch (e) {
         console.error(e);
         throw e;
@@ -412,7 +509,7 @@ export default {
         const { date, shift } = this.prevDateShift;
         const { data: medicine } = await this.$axios.$get("/medicine", {
           params: {
-            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            date: this.$dayjs(date).format("YYYY-MM-DD"),
             shift,
           },
         });
@@ -426,22 +523,28 @@ export default {
 
     async UpdateMedicine() {
       try {
+        this.saveStatus = "saving";
+
         const { recordId, date, shift, cats, note, member } = this.formData;
         await this.$axios.$post("/medicine/update", {
           recordId,
-          date: this.$dayjs(date).format("MM/DD/YYYY"),
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
           shift,
           cats,
           note,
           member,
         });
+
+        this.saveStatus = "success";
+        this.lastSavedAt = new Date();
       } catch (e) {
         console.error(e);
+        this.saveStatus = "error";
         throw e;
       }
     },
 
-    async NotifyLine() {
+    async ManualNotifyLine() {
       try {
         this.loadingNotify = true;
 
@@ -523,6 +626,19 @@ export default {
   a {
     display: block;
   }
+
+  .last-update {
+    margin: 0 0 5px 0;
+    color: #ccc;
+    font-size: 11px;
+  }
+
+  .last-saved {
+    margin: 0 0 5px 0;
+    color: #ccc;
+    font-size: 11px;
+  }
+
   .line-green {
     background-color: #03c100; // Line 綠色
     color: white;

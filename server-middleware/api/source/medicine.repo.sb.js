@@ -14,7 +14,7 @@ export const ListNotice = async (body) => {
     .select()
     .or(`shift.eq.both,shift.eq.${shift}`);
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`list notice error! error: ${JSON.stringify(error)}`);
   }
 
   return data
@@ -29,18 +29,23 @@ export const Get = async (body) => {
     .from(TABLE_MEDICINE)
     .select()
     .eq("date", date)
-    .eq("shift", shift);
+    .eq("shift", shift)
+    .order("createdTime", { ascending: true })
+    .limit(1);
+
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`get medicine error! error: ${JSON.stringify(error)}`);
   }
 
-  return data.map(({ id, ...rest }) => {
-    return {
-      ...rest,
-      recordId: id,
-      cats: JSON.parse(rest.cats),
-    };
-  });
+  if (data.length === 0) {
+    return null;
+  }
+
+  return {
+    ...data[0],
+    recordId: data[0].id,
+    cats: JSON.parse(data[0].cats),
+  };
 };
 
 export const Between = async (body) => {
@@ -56,7 +61,7 @@ export const Between = async (body) => {
     .order("shift", { ascending: true });
 
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`between medicine error! error: ${JSON.stringify(error)}`);
   }
 
   return data.map(({ id, ...rest }) => {
@@ -90,9 +95,17 @@ export const Create = async (body) => {
         createdTime: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
       },
     ])
-    .select();
+    .select()
+    .limit(1);
+
+  // duplicate key error
+  if (error && error.code == "23505") {
+    const medicine = await Get({ date, shift });
+    return medicine;
+  }
+
   if (error) {
-    throw new Error(`HTTP error! status: ${error.status}`);
+    throw new Error(`create medicine error! error: ${JSON.stringify(error)}`);
   }
 
   return {
@@ -105,11 +118,10 @@ export const Create = async (body) => {
 export const Update = async (body) => {
   const { recordId, date, shift, cats, note, member } = body;
   try {
-    const oldData = await Get({
+    const { note: oldNote } = await Get({
       date: dayjs(date).format("YYYY-MM-DD"),
       shift,
     });
-    const { note: oldNote } = oldData[0];
 
     const { data, error } = await supabase
       .from(TABLE_MEDICINE)
@@ -123,6 +135,12 @@ export const Update = async (body) => {
       })
       .eq("id", recordId)
       .select();
+
+    if (error) {
+      throw new Error(`update medicine error! error: ${JSON.stringify(error)}`);
+    }
+
+    return;
 
     const { note: newNote } = data[0];
 
