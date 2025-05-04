@@ -226,7 +226,7 @@ export default {
       return {
         name: "medicine",
         query: {
-          date: this.$dayjs(this.prevDateShift.date).format("MM/DD/YYYY"),
+          date: this.$dayjs(this.prevDateShift.date).format("YYYY-MM-DD"),
           shift: this.prevDateShift.shift,
         },
       };
@@ -239,7 +239,7 @@ export default {
     },
   },
   created() {
-    this.autoSave = debounce(this.UpdateMedicine, 300);
+    this.autoSave = debounce(this.UpdateMedicine, 800);
   },
   async beforeMount() {
     try {
@@ -509,7 +509,7 @@ export default {
         const { date, shift } = this.prevDateShift;
         const { data: medicine } = await this.$axios.$get("/medicine", {
           params: {
-            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            date: this.$dayjs(date).format("YYYY-MM-DD"),
             shift,
           },
         });
@@ -528,7 +528,7 @@ export default {
         const { recordId, date, shift, cats, note, member } = this.formData;
         await this.$axios.$post("/medicine/update", {
           recordId,
-          date: this.$dayjs(date).format("MM/DD/YYYY"),
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
           shift,
           cats,
           note,

@@ -59,6 +59,7 @@ export const Between = async (body) => {
 export const Create = async (body) => {
   let list = [];
   const cats = await repoCat.List();
+
   cats.forEach((cat, index, array) => {
     list.push({
       cat: cat,

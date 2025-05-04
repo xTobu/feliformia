@@ -440,7 +440,6 @@ export default {
             filter: `id=eq.${recordId}`,
           },
           (payload) => {
-            console.log("payload", payload);
             if (payload.new) {
               const {
                 id: recordId,
@@ -636,7 +635,7 @@ export default {
         const { date, shift } = this.formData;
         const { data: regular } = await this.$axios.$get("/regular", {
           params: {
-            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            date: this.$dayjs(date).format("YYYY-MM-DD"),
             shift,
           },
         });
@@ -669,7 +668,7 @@ export default {
         const { date, shift } = this.prevDateShift;
         const { data: regular } = await this.$axios.$get("/regular", {
           params: {
-            date: this.$dayjs(date).format("MM/DD/YYYY"),
+            date: this.$dayjs(date).format("YYYY-MM-DD"),
             shift,
           },
         });
@@ -688,7 +687,7 @@ export default {
 
         await this.$axios.$post("/regular/update", {
           recordId,
-          date: this.$dayjs(date).format("MM/DD/YYYY"),
+          date: this.$dayjs(date).format("YYYY-MM-DD"),
           shift,
           cats,
           note,
