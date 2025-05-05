@@ -388,7 +388,7 @@ export default {
   },
 
   created() {
-    this.autoSave = debounce(this.UpdateRegular, 800);
+    this.autoSave = debounce(this.UpdateRegular, 10000);
   },
 
   async beforeMount() {

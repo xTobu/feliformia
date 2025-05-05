@@ -239,7 +239,7 @@ export default {
     },
   },
   created() {
-    this.autoSave = debounce(this.UpdateMedicine, 800);
+    this.autoSave = debounce(this.UpdateMedicine, 10000);
   },
   async beforeMount() {
     try {
