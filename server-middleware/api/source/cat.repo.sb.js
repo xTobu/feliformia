@@ -4,7 +4,10 @@ const TABLE_CAT = "cats";
 
 export const List = async () => {
   try {
-    const { data, error } = await supabase.from(TABLE_CAT).select();
+    const { data, error } = await supabase
+      .from(TABLE_CAT)
+      .select()
+      .eq("adopted", false);
     if (error) {
       throw new Error(`HTTP error! status: ${error.status}`);
     }
