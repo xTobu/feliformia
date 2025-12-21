@@ -1,5 +1,10 @@
 <template>
   <div>
+    <div class="user-bar" v-if="isAuthenticated">
+      <span class="user-email">{{ displayName }}</span>
+      <nuxt-link to="/settings" class="settings-link">設定</nuxt-link>
+      <button class="logout-btn" @click="signOut">登出</button>
+    </div>
     <div class="wrapper">
       <nuxt :key="$route.fullPath" />
     </div>
@@ -8,12 +13,21 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import Footer from "./../components/Footer.vue";
 import FloatButton from "./../components/FloatButton.vue";
 export default {
   components: {
     Footer,
     FloatButton,
+  },
+  computed: {
+    ...mapGetters('auth', ['isAuthenticated', 'userEmail', 'displayName'])
+  },
+  methods: {
+    async signOut() {
+      await this.$supabase.auth.signOut();
+    },
   },
   // page component definitions
 };
@@ -24,6 +38,45 @@ $grey: #657181;
 $blue: #6da2c2;
 $light_grey: #f5f7f8;
 $brown: #8e8783;
+
+.user-bar {
+  background: #f5f7f8;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e0e0e0;
+
+  .user-email {
+    font-size: 13px;
+    color: $grey;
+  }
+
+  .settings-link {
+    font-size: 12px;
+    color: $grey;
+    text-decoration: underline;
+    margin-bottom: 0;
+  }
+
+  .logout-btn {
+    padding: 4px 12px;
+    font-size: 12px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    color: $grey;
+    width: auto;
+    height: auto;
+    line-height: 1.5;
+
+    &:hover {
+      background: #f0f0f0;
+    }
+  }
+}
 
 body,
 html {
