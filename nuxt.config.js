@@ -1,8 +1,8 @@
 export default {
+  ssr: false,  // 關閉 SSR，改成純 SPA
   serverMiddleware: [
     { path: "/api", handler: "~/server-middleware/api/index.js" },
   ],
-
   /*
    ** Headers of the page
    */
