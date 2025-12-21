@@ -3,10 +3,6 @@ export default {
     { path: "/api", handler: "~/server-middleware/api/index.js" },
   ],
 
-  // 全域 router middleware
-  router: {
-    middleware: ['auth']
-  },
   /*
    ** Headers of the page
    */
