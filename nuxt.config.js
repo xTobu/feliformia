@@ -1,10 +1,7 @@
-const path = require('path');
-
 export default {
   ssr: false,  // 關閉 SSR，改成純 SPA
   serverMiddleware: [
-    { path: "/", handler: path.join(__dirname, 'server-middleware/auth.js') },
-    { path: "/api", handler: path.join(__dirname, 'server-middleware/api/index.js') },
+    { path: "/api", handler: "~/server-middleware/api/index.js" },
   ],
   /*
    ** Headers of the page
