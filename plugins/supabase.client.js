@@ -1,11 +1,38 @@
 import { createClient } from "@supabase/supabase-js";
 
 export default async (context, inject) => {
-  const { store, route } = context;
+  const { store, route, app } = context;
 
   const supabase = createClient(
     context.$config.supabaseUrl,
-    context.$config.supabasePublicKey
+    context.$config.supabasePublicKey,
+    {
+      auth: {
+        // 使用 cookie 儲存 session
+        storage: {
+          getItem: (key) => {
+            if (process.client) {
+              const value = document.cookie
+                .split('; ')
+                .find(row => row.startsWith(key + '='))
+                ?.split('=')[1];
+              return value ? decodeURIComponent(value) : null;
+            }
+            return null;
+          },
+          setItem: (key, value) => {
+            if (process.client) {
+              document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
+            }
+          },
+          removeItem: (key) => {
+            if (process.client) {
+              document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+            }
+          }
+        }
+      }
+    }
   );
 
   // 載入使用者 profile
@@ -43,12 +70,10 @@ export default async (context, inject) => {
     });
     loadProfile(session.user.id);
 
-    // 已登入但在登入頁，跳到首頁
     if (route.path === '/login') {
       window.location.href = '/';
     }
   } else {
-    // 未登入且不在公開頁面，跳到登入頁
     if (!publicPages.includes(route.path)) {
       window.location.href = '/login';
       return;

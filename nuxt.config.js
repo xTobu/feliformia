@@ -1,6 +1,7 @@
 export default {
   ssr: false,  // 關閉 SSR，改成純 SPA
   serverMiddleware: [
+    { path: "/", handler: "~/server-middleware/auth.js" },
     { path: "/api", handler: "~/server-middleware/api/index.js" },
   ],
   /*
